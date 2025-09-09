@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MayaBoss</string>
+    <string name="title_activity_main">MayaBoss</string>
+    <string name="qr_code_title">Lightning Payment</string>
+    <string name="scan_to_pay">Scan to Pay with Lightning</string>
+    <string name="payment_received">Payment received!</string>
+    <string name="offers_title">Available Offers</string>
+    <string name="refresh_offers">Refresh Offers</string>
+</resources>
