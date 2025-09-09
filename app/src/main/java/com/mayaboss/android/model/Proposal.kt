@@ -5,5 +5,6 @@ data class Proposal(
     val name: String,
     val roi_hrs: Double,
     val risk: String,
-    val cost: Int
+    val cost: Int,
+    val locked: Boolean = false
 )

@@ -17,16 +17,35 @@ app.add_middleware(
 # In-memory agent state
 AGENT_RUNNING = False
 
+# Treasury information
+TREASURY_ADDRESS = "0xYourWalletAddressHere"  # Replace with real wallet
+TREASURY_BALANCE = 0.0012  # Simulated for now
+
 @app.get("/proposals")
 def get_proposals():
-    return [{
-        "id": "A-01",
-        "name": "Faucet-Harvester",
-        "description": "Claims ETH from testnet faucets every 10 min.",
-        "roi_hrs": 0.3,
-        "risk": "low",
-        "cost": 0
-    }]
+    treasury_balance = 0.0012  # Later fetch real balance
+    
+    proposals = [
+        {
+            "id": "A-01",
+            "name": "Faucet-Harvester",
+            "description": "Claims ETH from testnet faucets every 10 min.",
+            "roi_hrs": 0.3,
+            "risk": "low",
+            "cost": 0,
+            "locked": False
+        },
+        {
+            "id": "A-13",
+            "name": "Liquidity-Miner",
+            "description": "Provides liquidity to DEX pools for fees.",
+            "roi_hrs": 5.0,
+            "risk": "medium",
+            "cost": 0.05,
+            "locked": treasury_balance < 0.01
+        }
+    ]
+    return proposals
 
 # Replace /agents/run
 @app.post("/agents/run")
@@ -56,6 +75,25 @@ def get_logs():
         return data
     except:
         return {"logs": ["Failed to parse agent logs"]}
+
+@app.get("/treasury")
+def get_treasury():
+    return {
+        "address": TREASURY_ADDRESS,
+        "balance_eth": TREASURY_BALANCE,
+        "agents_contributed": ["A-01"],
+        "last_updated": time.ctime()
+    }
+
+@app.post("/agents/decide")
+def agent_decide(agent_id: str, decision: str):
+    global AGENT_RUNNING
+    if decision == "continue":
+        return {"status": "extended", "agent": agent_id}
+    else:
+        subprocess.run("docker kill a01", shell=True)
+        AGENT_RUNNING = False
+        return {"status": "terminated", "agent": agent_id}
 
 @app.get("/heartbeat")
 def heartbeat():

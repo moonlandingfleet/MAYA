@@ -10,6 +10,7 @@ app = FastAPI()
 LOG_FILE = "log.txt"
 START_TIME = time.time()
 RUNNING = True
+TREASURY_ADDRESS = "0xdeadbeef"
 
 # Write initial log
 with open(LOG_FILE, "w") as f:
@@ -51,7 +52,9 @@ def kill():
 def heartbeat():
     while RUNNING:
         time.sleep(10)  # 🔥 For demo. Change to 600 later.
+        profit = round(random.uniform(0.0001, 0.0005), 6)
         with open(LOG_FILE, "a") as f:
+            f.write(f"[{time.ctime()}] 📈 PROFIT: {profit} ETH sent to treasury {TREASURY_ADDRESS}\n")
             f.write(f"[{time.ctime()}] HEARTBEAT: Still alive. Wallet: 0x{''.join(random.choices('0123456789abcdef', k=40))}\n")
 
 threading.Thread(target=heartbeat, daemon=True).start()

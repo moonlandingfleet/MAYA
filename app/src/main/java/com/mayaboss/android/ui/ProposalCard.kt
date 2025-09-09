@@ -1,6 +1,8 @@
 package com.mayaboss.android.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,14 +25,20 @@ fun ProposalCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text(text = proposal.name, style = MaterialTheme.typography.headlineSmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = proposal.name, style = MaterialTheme.typography.headlineSmall)
+                if (proposal.locked) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.Lock, contentDescription = "Locked")
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "ROI: ${proposal.roi_hrs}$/hr", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Risk: ${proposal.risk}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Cost: ${proposal.cost} ETH", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Row {
-                Button(onClick = onApprove, modifier = Modifier.weight(1f)) {
+                Button(onClick = onApprove, modifier = Modifier.weight(1f), enabled = !proposal.locked) {
                     Text("✅ Approve")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
