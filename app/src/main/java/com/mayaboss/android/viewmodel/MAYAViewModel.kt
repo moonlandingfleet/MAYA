@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mayaboss.android.model.LogResponse
 import com.mayaboss.android.model.Proposal
 import com.mayaboss.android.model.Treasury
+import com.mayaboss.android.model.WalletSession
 import com.mayaboss.android.network.MAYAApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,12 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
     
     private val _showDecisionDialog = MutableStateFlow(false)
     val showDecisionDialog: StateFlow<Boolean> = _showDecisionDialog.asStateFlow()
+    
+    private val _walletSession = MutableStateFlow<WalletSession>(WalletSession(false, null, null, null))
+    val walletSession: StateFlow<WalletSession> = _walletSession.asStateFlow()
+    
+    private val _walletBalance = MutableStateFlow(0.0)
+    val walletBalance: StateFlow<Double> = _walletBalance.asStateFlow()
 
     init {
         loadProposals()
@@ -59,7 +66,15 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
                 // Handle error
             }
         }
+    }
     
+    fun connectWallet(onUri: (String) -> Unit, onError: (Throwable) -> Unit) {
+        // WalletConnectManager.getInstance().connect { uri ->
+        //     onUri(uri)
+        // }
+        // Placeholder implementation for now
+        onUri("wc:placeholder_uri")
+    }
 
     private fun loadTreasury() {
         viewModelScope.launch {
@@ -70,6 +85,27 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
                 // Handle
             }
         }
+    }
+    
+    fun fetchWalletBalance() {
+        viewModelScope.launch {
+            try {
+                // Fetch real balance from backend
+                // val response = api.getWalletBalance()
+                // _walletBalance.value = response.balance
+                // Placeholder implementation
+                _walletBalance.value = 0.0015
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+    
+    fun requestTransaction(to: String, amount: String) {
+        // WalletConnectManager.getInstance().sendTransaction(to, amount) { result ->
+        //     // Handle transaction result
+        // }
+        // Placeholder implementation
     }
     
     fun onDecision(choice: Boolean) {

@@ -13,9 +13,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +27,9 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import com.mayaboss.android.network.MAYAApiService
+import com.mayaboss.android.network.WalletConnectManager
 import com.mayaboss.android.ui.MainScreen
+import com.mayaboss.android.ui.WalletConnectScreen
 import com.mayaboss.android.viewmodel.MAYAViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -86,6 +91,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
+        // Initialize WalletConnect
+        WalletConnectManager.getInstance().initialize(application)
+        
         // Initialize the API service
         offerApiService = OfferApiService.create()
         
@@ -106,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                 Surface {
                     val apiService = MAYAApiService.create("http://localhost:8080/") // Adjust base URL as needed
                     val viewModel = ViewModelProvider(this, MAYAViewModelFactory(apiService))[MAYAViewModel::class.java]
-                    MainScreen(viewModel)
+                    AppNavigation(viewModel)
                 }
             }
         }
@@ -118,6 +126,22 @@ class MainActivity : AppCompatActivity() {
             600 // Set height as needed
         )
         mainLayout.addView(composeView)
+    }
+    
+    @Composable
+    fun AppNavigation(viewModel: MAYAViewModel) {
+        var currentScreen by remember { mutableStateOf("main") }
+        
+        when (currentScreen) {
+            "main" -> MainScreen(
+                viewModel = viewModel,
+                onNavigateToWalletConnect = { currentScreen = "walletConnect" }
+            )
+            "walletConnect" -> WalletConnectScreen(
+                viewModel = viewModel,
+                onBack = { currentScreen = "main" }
+            )
+        }
     }
     
     

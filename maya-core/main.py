@@ -3,6 +3,7 @@ import json
 import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from web3 import Web3
 
 app = FastAPI()
 
@@ -13,6 +14,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize Web3 connection (using Infura as an example)
+# Replace with your Infura project ID or other Ethereum node provider
+w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID"))
 
 # In-memory agent state
 AGENT_RUNNING = False
@@ -78,12 +83,43 @@ def get_logs():
 
 @app.get("/treasury")
 def get_treasury():
+    # Fetch real ETH balance for the treasury address
+    try:
+        if w3.is_connected():
+            balance_wei = w3.eth.get_balance(TREASURY_ADDRESS)
+            balance_eth = w3.from_wei(balance_wei, 'ether')
+            real_balance = float(balance_eth)
+        else:
+            # Fallback to simulated balance if not connected
+            real_balance = TREASURY_BALANCE
+    except Exception as e:
+        # Fallback to simulated balance if error occurs
+        real_balance = TREASURY_BALANCE
+    
     return {
         "address": TREASURY_ADDRESS,
-        "balance_eth": TREASURY_BALANCE,
+        "balance_eth": real_balance,
         "agents_contributed": ["A-01"],
-        "last_updated": time.ctime()
+        "last_updated": time.ctime(),
+        "wallet_connected": w3.is_connected()
     }
+
+@app.get("/wallet/balance")
+def get_wallet_balance(address: str):
+    """Fetch real ETH balance for a given wallet address"""
+    try:
+        if w3.is_connected():
+            balance_wei = w3.eth.get_balance(address)
+            balance_eth = w3.from_wei(balance_wei, 'ether')
+            return {
+                "address": address,
+                "balance_eth": float(balance_eth),
+                "last_updated": time.ctime()
+            }
+        else:
+            return {"error": "Not connected to Ethereum network"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/agents/decide")
 def agent_decide(agent_id: str, decision: str):
@@ -94,6 +130,31 @@ def agent_decide(agent_id: str, decision: str):
         subprocess.run("docker kill a01", shell=True)
         AGENT_RUNNING = False
         return {"status": "terminated", "agent": agent_id}
+
+@app.post("/wallet/transaction")
+def request_transaction(agent_id: str, amount_eth: float, to_address: str):
+    """Request a transaction from the Android app"""
+    # This endpoint would trigger a notification to the Android app
+    # to request a transaction via WalletConnect
+    return {
+        "status": "transaction_requested",
+        "agent_id": agent_id,
+        "amount_eth": amount_eth,
+        "to_address": to_address
+    }
+
+@app.post("/convert-to-btc")
+def convert_to_btc(amount_eth: float):
+    """Convert ETH to BTC using exchange APIs"""
+    # Implementation would use 1inch, Uniswap, or Thorchain
+    # For simulation, we'll use a fixed rate
+    btc_rate = 0.05  # Simulated ETH to BTC rate
+    return {
+        "status": "conversion_started",
+        "amount_eth": amount_eth,
+        "estimated_btc": amount_eth * btc_rate,
+        "rate": btc_rate
+    }
 
 @app.get("/heartbeat")
 def heartbeat():
