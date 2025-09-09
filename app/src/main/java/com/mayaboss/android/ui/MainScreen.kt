@@ -20,6 +20,7 @@ fun MainScreen(viewModel: MAYAViewModel, onNavigateToWalletConnect: () -> Unit) 
     val showDecisionDialog by viewModel.showDecisionDialog.collectAsState()
     val walletSession by viewModel.walletSession.collectAsState()
     val walletBalance by viewModel.walletBalance.collectAsState()
+    val isConnected by derivedStateOf { viewModel.isConnected() }
 
     Column(
         modifier = Modifier
@@ -37,7 +38,15 @@ fun MainScreen(viewModel: MAYAViewModel, onNavigateToWalletConnect: () -> Unit) 
                     .padding(8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("✅ Wallet Connected", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("✅ Wallet Connected", style = MaterialTheme.typography.titleMedium)
+                        Button(onClick = { viewModel.disconnectWallet() }) {
+                            Text("Disconnect")
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Address: ${walletSession.address?.take(10)}...", style = MaterialTheme.typography.bodyMedium)
                     Text("Balance: $walletBalance ETH", style = MaterialTheme.typography.bodyLarge)

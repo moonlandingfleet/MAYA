@@ -1,9 +1,10 @@
 import subprocess
 import json
 import time
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from web3 import Web3
+from typing import Dict, Any
 
 app = FastAPI()
 
@@ -17,14 +18,17 @@ app.add_middleware(
 
 # Initialize Web3 connection (using Infura as an example)
 # Replace with your Infura project ID or other Ethereum node provider
-w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID"))
+w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/2db6b9cd6ba745f3b98f07e264e57785"))
 
 # In-memory agent state
 AGENT_RUNNING = False
 
 # Treasury information
-TREASURY_ADDRESS = "0xYourWalletAddressHere"  # Replace with real wallet
+TREASURY_ADDRESS = "0x16B3d93d02FB58f7aCe79157E74Eb275D2c3F734"  # Replace with real wallet
 TREASURY_BALANCE = 0.0012  # Simulated for now
+
+# Store wallet sessions
+WALLET_SESSIONS = {}
 
 @app.get("/proposals")
 def get_proposals():
@@ -132,7 +136,7 @@ def agent_decide(agent_id: str, decision: str):
         return {"status": "terminated", "agent": agent_id}
 
 @app.post("/wallet/transaction")
-def request_transaction(agent_id: str, amount_eth: float, to_address: str):
+def request_transaction(agent_id: str, amount_eth: float, to_address: str, from_address: str = None):
     """Request a transaction from the Android app"""
     # This endpoint would trigger a notification to the Android app
     # to request a transaction via WalletConnect
@@ -140,8 +144,41 @@ def request_transaction(agent_id: str, amount_eth: float, to_address: str):
         "status": "transaction_requested",
         "agent_id": agent_id,
         "amount_eth": amount_eth,
-        "to_address": to_address
+        "to_address": to_address,
+        "from_address": from_address
     }
+
+@app.post("/wallet/session/connect")
+def connect_wallet(address: str, chain_id: str):
+    """Connect a wallet session"""
+    session_id = f"session_{int(time.time())}"
+    WALLET_SESSIONS[session_id] = {
+        "address": address,
+        "chain_id": chain_id,
+        "connected_at": time.ctime()
+    }
+    return {
+        "status": "connected",
+        "session_id": session_id,
+        "address": address
+    }
+
+@app.post("/wallet/session/disconnect")
+def disconnect_wallet(session_id: str):
+    """Disconnect a wallet session"""
+    if session_id in WALLET_SESSIONS:
+        del WALLET_SESSIONS[session_id]
+        return {"status": "disconnected"}
+    else:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+@app.get("/wallet/session/{session_id}")
+def get_session(session_id: str):
+    """Get wallet session information"""
+    if session_id in WALLET_SESSIONS:
+        return WALLET_SESSIONS[session_id]
+    else:
+        raise HTTPException(status_code=404, detail="Session not found")
 
 @app.post("/convert-to-btc")
 def convert_to_btc(amount_eth: float):

@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.mayaboss.android.app-mergeDebugResources-28:/values-v24/values-v24.xml",
+            "outputFile": "com.mayaboss.android.app-mergeDebugResources-58:/values-v24/values-v24.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\bryan\\.gradle\\caches\\transforms-3\\eb0040ef07ebf4d6e2fda1dc1eb818e7\\transformed\\material-1.8.0\\res\\values-v24\\values-v24.xml",
+                    "source": "C:\\Users\\bryan\\.gradle\\caches\\transforms-3\\e08a42e1b8c2a24b349f223b51502869\\transformed\\material-1.8.0\\res\\values-v24\\values-v24.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,9,12,15",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\bryan\\.gradle\\caches\\transforms-3\\aba8c55783c738ad6bb9d2c2562a2e9e\\transformed\\appcompat-1.6.1\\res\\values-v24\\values-v24.xml",
+                    "source": "C:\\Users\\bryan\\.gradle\\caches\\transforms-3\\a2241d7dc968263c8977e060cb8f2b6d\\transformed\\appcompat-1.6.1\\res\\values-v24\\values-v24.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",

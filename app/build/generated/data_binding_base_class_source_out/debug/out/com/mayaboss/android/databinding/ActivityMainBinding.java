@@ -22,6 +22,9 @@ public final class ActivityMainBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
+  public final ConstraintLayout mainLayout;
+
+  @NonNull
   public final RecyclerView offersRecyclerView;
 
   @NonNull
@@ -37,10 +40,11 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView titleTextView;
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView,
-      @NonNull RecyclerView offersRecyclerView, @NonNull TextView offersTitleTextView,
-      @NonNull Button refreshOffersButton, @NonNull Button showQRButton,
-      @NonNull TextView titleTextView) {
+      @NonNull ConstraintLayout mainLayout, @NonNull RecyclerView offersRecyclerView,
+      @NonNull TextView offersTitleTextView, @NonNull Button refreshOffersButton,
+      @NonNull Button showQRButton, @NonNull TextView titleTextView) {
     this.rootView = rootView;
+    this.mainLayout = mainLayout;
     this.offersRecyclerView = offersRecyclerView;
     this.offersTitleTextView = offersTitleTextView;
     this.refreshOffersButton = refreshOffersButton;
@@ -75,6 +79,8 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      ConstraintLayout mainLayout = (ConstraintLayout) rootView;
+
       id = R.id.offersRecyclerView;
       RecyclerView offersRecyclerView = ViewBindings.findChildViewById(rootView, id);
       if (offersRecyclerView == null) {
@@ -105,7 +111,7 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, offersRecyclerView,
+      return new ActivityMainBinding((ConstraintLayout) rootView, mainLayout, offersRecyclerView,
           offersTitleTextView, refreshOffersButton, showQRButton, titleTextView);
     }
     String missingId = rootView.getResources().getResourceName(id);

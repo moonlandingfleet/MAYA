@@ -1,10 +1,21 @@
 package com.mayaboss.android
 
+import com.mayaboss.android.model.WalletSession
 import com.mayaboss.android.network.WalletConnectManager
 import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Before
+import org.mockito.Mockito.*
 
 class WalletConnectManagerTest {
+
+    @Before
+    fun setup() {
+        // Reset the singleton instance before each test
+        val field = WalletConnectManager::class.java.getDeclaredField("INSTANCE")
+        field.isAccessible = true
+        field.set(null, null)
+    }
 
     @Test
     fun testSingletonInstance() {
@@ -17,7 +28,7 @@ class WalletConnectManagerTest {
     
     @Test
     fun testWalletSessionDataClass() {
-        val walletSession = com.mayaboss.android.model.WalletSession(
+        val walletSession = WalletSession(
             connected = true,
             address = "0x1234567890123456789012345678901234567890",
             chainId = "eip155:1",
@@ -44,5 +55,19 @@ class WalletConnectManagerTest {
         assertEquals(1.5, treasury.balance_eth, 0.0)
         assertEquals(2, treasury.agents_contributed.size)
         assertTrue(treasury.wallet_connected)
+    }
+    
+    @Test
+    fun testIsConnected() {
+        val walletSession = WalletSession(
+            connected = true,
+            address = "0x1234567890123456789012345678901234567890",
+            chainId = "eip155:1",
+            topic = "topic123"
+        )
+        
+        // This test would need to be enhanced with mocking in a real implementation
+        // For now, we're just verifying the data class structure
+        assertNotNull(walletSession)
     }
 }

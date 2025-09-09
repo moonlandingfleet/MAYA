@@ -55,12 +55,9 @@ All dependencies are specified in the `app/build.gradle` file:
 
 ## Deployment to Huawei Device
 
-### Prerequisites
-- Huawei Android device with USB debugging enabled
-- USB cable for connection
-- Android Studio or ADB tools installed on development machine
+For detailed instructions on deploying to Huawei devices, please refer to the [Huawei Deployment Guide](HUAWEI_DEPLOYMENT.md).
 
-### Steps
+### Quick Steps
 1. Enable Developer Options on Huawei device:
    - Go to Settings > About phone
    - Tap "Build number" 7 times

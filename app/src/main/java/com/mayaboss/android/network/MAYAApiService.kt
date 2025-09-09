@@ -27,6 +27,18 @@ interface MAYAApiService {
     @POST("agents/decide")
     suspend fun agentDecide(@Query("agent_id") agentId: String, @Query("decision") decision: String): ResponseBody
     
+    @GET("wallet/balance")
+    fun getWalletBalance(@Query("address") address: String): Call<WalletBalanceResponse>
+    
+    @POST("wallet/session/connect")
+    fun connectWallet(@Query("address") address: String, @Query("chain_id") chainId: String): Call<WalletSessionResponse>
+    
+    @POST("wallet/session/disconnect")
+    fun disconnectWallet(@Query("session_id") sessionId: String): Call<WalletDisconnectResponse>
+    
+    @GET("wallet/session/{session_id}")
+    fun getWalletSession(@Query("session_id") sessionId: String): Call<WalletSessionInfo>
+    
     companion object {
         fun create(baseUrl: String): MAYAApiService {
             val retrofit = Retrofit.Builder()
@@ -37,3 +49,25 @@ interface MAYAApiService {
         }
     }
 }
+
+data class WalletBalanceResponse(
+    val address: String,
+    val balance_eth: Double,
+    val last_updated: String
+)
+
+data class WalletSessionResponse(
+    val status: String,
+    val session_id: String,
+    val address: String
+)
+
+data class WalletDisconnectResponse(
+    val status: String
+)
+
+data class WalletSessionInfo(
+    val address: String,
+    val chain_id: String,
+    val connected_at: String
+)

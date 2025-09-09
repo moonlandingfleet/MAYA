@@ -1,5 +1,6 @@
 package com.mayaboss.android.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mayaboss.android.model.LogResponse
@@ -7,13 +8,18 @@ import com.mayaboss.android.model.Proposal
 import com.mayaboss.android.model.Treasury
 import com.mayaboss.android.model.WalletSession
 import com.mayaboss.android.network.MAYAApiService
+import com.mayaboss.android.network.WalletBalanceResponse
+import com.mayaboss.android.network.WalletConnectManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
+class MAYAViewModel(private val api: MAYAApiService, private val application: Application) : ViewModel() {
 
     private val _proposals = MutableStateFlow<List<Proposal>>(emptyList())
     val proposals: StateFlow<List<Proposal>> = _proposals.asStateFlow()
@@ -37,9 +43,24 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
     val walletBalance: StateFlow<Double> = _walletBalance.asStateFlow()
 
     init {
+        // Initialize WalletConnect
+        WalletConnectManager.getInstance().initialize(application)
+        
         loadProposals()
         loadTreasury()
         startLogPolling()
+        observeWalletSession()
+    }
+
+    private fun observeWalletSession() {
+        viewModelScope.launch {
+            WalletConnectManager.getInstance().sessionState.collect { session ->
+                _walletSession.value = session ?: WalletSession(false, null, null, null)
+                if (session?.address != null) {
+                    fetchWalletBalance()
+                }
+            }
+        }
     }
 
     private fun loadProposals() {
@@ -69,11 +90,10 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
     }
     
     fun connectWallet(onUri: (String) -> Unit, onError: (Throwable) -> Unit) {
-        // WalletConnectManager.getInstance().connect { uri ->
-        //     onUri(uri)
-        // }
-        // Placeholder implementation for now
-        onUri("wc:placeholder_uri")
+        WalletConnectManager.getInstance().connect(
+            onUri = onUri,
+            onError = onError
+        )
     }
 
     private fun loadTreasury() {
@@ -90,22 +110,76 @@ class MAYAViewModel(private val api: MAYAApiService) : ViewModel() {
     fun fetchWalletBalance() {
         viewModelScope.launch {
             try {
-                // Fetch real balance from backend
-                // val response = api.getWalletBalance()
-                // _walletBalance.value = response.balance
-                // Placeholder implementation
-                _walletBalance.value = 0.0015
+                val session = WalletConnectManager.getInstance().getCurrentSession()
+                session?.address?.let { address ->
+                    api.getWalletBalance(address).enqueue(object : Callback<WalletBalanceResponse> {
+                        override fun onResponse(call: Call<WalletBalanceResponse>, response: Response<WalletBalanceResponse>) {
+                            if (response.isSuccessful) {
+                                response.body()?.let { walletBalanceResponse ->
+                                    _walletBalance.value = walletBalanceResponse.balance_eth
+                                }
+                            }
+                        }
+                        
+                        override fun onFailure(call: Call<WalletBalanceResponse>, t: Throwable) {
+                            // Handle error
+                        }
+                    })
+                }
             } catch (e: Exception) {
                 // Handle error
             }
         }
     }
     
-    fun requestTransaction(to: String, amount: String) {
-        // WalletConnectManager.getInstance().sendTransaction(to, amount) { result ->
-        //     // Handle transaction result
-        // }
-        // Placeholder implementation
+    fun requestTransaction(to: String, amount: String, data: String = "") {
+        val session = WalletConnectManager.getInstance().getCurrentSession()
+        if (session?.address != null) {
+            WalletConnectManager.getInstance().sendTransaction(
+                to = to,
+                from = session.address ?: "",
+                value = amount,
+                data = data,
+                onResult = { result ->
+                    // Handle transaction result
+                },
+                onError = { error ->
+                    // Handle transaction error
+                }
+            )
+        }
+    }
+    
+    fun signTransaction(transaction: Map<String, Any>) {
+        WalletConnectManager.getInstance().signTransaction(
+            transaction = transaction,
+            onResult = { result ->
+                // Handle sign result
+            },
+            onError = { error ->
+                // Handle sign error
+            }
+        )
+    }
+    
+    fun signTypedData(typedData: String) {
+        WalletConnectManager.getInstance().signTypedData(
+            typedData = typedData,
+            onResult = { result ->
+                // Handle sign result
+            },
+            onError = { error ->
+                // Handle sign error
+            }
+        )
+    }
+    
+    fun disconnectWallet() {
+        WalletConnectManager.getInstance().disconnect()
+    }
+    
+    fun isConnected(): Boolean {
+        return WalletConnectManager.getInstance().isConnected()
     }
     
     fun onDecision(choice: Boolean) {
