@@ -71,9 +71,9 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
     
-    // WalletConnect dependencies - temporarily disabled
-    // implementation 'com.walletconnect:android-core:2.7.0'
-    // implementation 'com.walletconnect:sign:2.7.0'
+    // WalletConnect dependencies - temporarily disabled due to build issues
+    // implementation 'com.walletconnect:android-core:1.14.0'
+    // implementation 'com.walletconnect:sign:1.14.0'
     
     // Testing dependencies
     testImplementation 'junit:junit:4.13.2'

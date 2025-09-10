@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    val apiService = MAYAApiService.create("http://localhost:8080/") // Adjust base URL as needed
+                    val apiService = MAYAApiService.create("http://192.168.0.101:8000/")
                     val viewModel = ViewModelProvider(this, MAYAViewModelFactory(this.application, apiService))[MAYAViewModel::class.java]
                     AppNavigation(viewModel)
                 }
