@@ -22,202 +22,46 @@ import retrofit2.Response
 class MAYAViewModel(private val api: MAYAApiService, private val application: Application) : ViewModel() {
 
     private val _proposals = MutableStateFlow<List<Proposal>>(emptyList())
-    val proposals: StateFlow<List<Proposal>> = _proposals.asStateFlow()
+    val proposals: StateFlow<List<Proposal>> = _proposals
 
     private val _logs = MutableStateFlow<List<String>>(emptyList())
-    val logs: StateFlow<List<String>> = _logs.asStateFlow()
-    
-    private val _treasury = MutableStateFlow<Treasury?>(null)
-    val treasury: StateFlow<Treasury?> = _treasury.asStateFlow()
-    
-    private val _totalProfit = MutableStateFlow(0.0)
-    val totalProfit: StateFlow<Double> = _totalProfit.asStateFlow()
-    
-    private val _showDecisionDialog = MutableStateFlow(false)
-    val showDecisionDialog: StateFlow<Boolean> = _showDecisionDialog.asStateFlow()
-    
-    private val _walletSession = MutableStateFlow<WalletSession>(WalletSession(false, null, null, null))
-    val walletSession: StateFlow<WalletSession> = _walletSession.asStateFlow()
-    
-    private val _walletBalance = MutableStateFlow(0.0)
-    val walletBalance: StateFlow<Double> = _walletBalance.asStateFlow()
+    val logs: StateFlow<List<String>> = _logs
 
     init {
-        // Initialize WalletConnect
-        WalletConnectManager.getInstance().initialize(application)
-        
         loadProposals()
-        loadTreasury()
         startLogPolling()
-        observeWalletSession()
-    }
-
-    private fun observeWalletSession() {
-        viewModelScope.launch {
-            WalletConnectManager.getInstance().sessionState.collect { session ->
-                _walletSession.value = session ?: WalletSession(false, null, null, null)
-                if (session?.address != null) {
-                    fetchWalletBalance()
-                }
-            }
-        }
     }
 
     private fun loadProposals() {
         viewModelScope.launch {
             try {
-                val response = api.getProposals().execute()
+                val response = api.getProposals()
                 if (response.isSuccessful) {
                     _proposals.value = response.body() ?: emptyList()
+                } else {
+                    Log.e("MAYAViewModel", "Failed to load proposals: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                // Handle error
+                Log.e("MAYAViewModel", "Error loading proposals: ${e.message}")
             }
         }
     }
 
-    fun startAgent(agentId: String) {
-        viewModelScope.launch {
-            try {
-                val response = api.startAgent().execute()
-                if (response.isSuccessful) {
-                    // Handle success
-                }
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-    
-    fun connectWallet(onUri: (String) -> Unit, onError: (Throwable) -> Unit) {
-        WalletConnectManager.getInstance().connect(
-            onUri = onUri,
-            onError = onError
-        )
-    }
-
-    private fun loadTreasury() {
-        viewModelScope.launch {
-            try {
-                val treasury = api.getTreasury()
-                _treasury.value = treasury
-            } catch (e: Exception) {
-                // Handle
-            }
-        }
-    }
-    
-    fun fetchWalletBalance() {
-        viewModelScope.launch {
-            try {
-                val session = WalletConnectManager.getInstance().getCurrentSession()
-                session?.address?.let { address ->
-                    api.getWalletBalance(address).enqueue(object : Callback<WalletBalanceResponse> {
-                        override fun onResponse(call: Call<WalletBalanceResponse>, response: Response<WalletBalanceResponse>) {
-                            if (response.isSuccessful) {
-                                response.body()?.let { walletBalanceResponse ->
-                                    _walletBalance.value = walletBalanceResponse.balance_eth
-                                }
-                            }
-                        }
-                        
-                        override fun onFailure(call: Call<WalletBalanceResponse>, t: Throwable) {
-                            // Handle error
-                        }
-                    })
-                }
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-    
-    fun requestTransaction(to: String, amount: String, data: String = "") {
-        val session = WalletConnectManager.getInstance().getCurrentSession()
-        if (session?.address != null) {
-            WalletConnectManager.getInstance().sendTransaction(
-                to = to,
-                from = session.address ?: "",
-                value = amount,
-                data = data,
-                onResult = { result ->
-                    // Handle transaction result
-                },
-                onError = { error ->
-                    // Handle transaction error
-                }
-            )
-        }
-    }
-    
-    fun signTransaction(transaction: Map<String, Any>) {
-        WalletConnectManager.getInstance().signTransaction(
-            transaction = transaction,
-            onResult = { result ->
-                // Handle sign result
-            },
-            onError = { error ->
-                // Handle sign error
-            }
-        )
-    }
-    
-    fun signTypedData(typedData: String) {
-        WalletConnectManager.getInstance().signTypedData(
-            typedData = typedData,
-            onResult = { result ->
-                // Handle sign result
-            },
-            onError = { error ->
-                // Handle sign error
-            }
-        )
-    }
-    
-    fun disconnectWallet() {
-        WalletConnectManager.getInstance().disconnect()
-    }
-    
-    fun isConnected(): Boolean {
-        return WalletConnectManager.getInstance().isConnected()
-    }
-    
-    fun onDecision(choice: Boolean) {
-        viewModelScope.launch {
-            try {
-                api.agentDecide("A-01", if (choice) "continue" else "terminate")
-            } catch (e: Exception) {
-                // Handle
-            }
-            _showDecisionDialog.value = false
-        }
-    }
-    
     private fun startLogPolling() {
         viewModelScope.launch {
             while (true) {
                 try {
-                    val response = api.getLogs().execute()
+                    val response = api.getLogs()
                     if (response.isSuccessful) {
                         val logResponse = response.body()
                         _logs.value = logResponse?.logs ?: emptyList()
-                        
-                        // Calculate profit from logs
-                        val profitLines = logResponse?.logs?.filter { it.contains("📈 PROFIT:") } ?: emptyList()
-                        val total = profitLines.sumOf { line ->
-                            line.substringAfter("📈 PROFIT: ").substringBefore(" ETH").toDoubleOrNull() ?: 0.0
-                        }
-                        _totalProfit.value = total
-                        
-                        // Show decision dialog after 10 minutes (simplified for demo)
-                        if (logResponse?.logs?.size ?: 0 > 5 && logResponse?.logs?.any { it.contains("HEARTBEAT") } == true) {
-                            _showDecisionDialog.value = true
-                        }
+                    } else {
+                        Log.e("MAYAViewModel", "Failed to get logs: ${response.errorBody()?.string()}")
                     }
                 } catch (e: Exception) {
-                    // Silent fail
+                    Log.e("MAYAViewModel", "Error getting logs: ${e.message}")
                 }
-                delay(10000) // 10s
+                delay(10000) // Poll every 10 seconds
             }
         }
     }
