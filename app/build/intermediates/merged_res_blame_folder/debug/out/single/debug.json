@@ -4,16 +4,20 @@
         "source": "com.mayaboss.android.app-main-62:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
     {
+        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.mayaboss.android.app-main-62:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
         "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-hdpi_ic_launcher.png.flat",
         "source": "com.mayaboss.android.app-main-62:/mipmap-hdpi/ic_launcher.png"
     },
     {
-        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.mayaboss.android.app-main-62:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.mayaboss.android.app-main-62:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "com.mayaboss.android.app-merged_res-60:/layout_qr_dialog.xml.flat",
-        "source": "com.mayaboss.android.app-main-62:/layout/qr_dialog.xml"
+        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.mayaboss.android.app-main-62:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-mdpi_ic_launcher_round.png.flat",
@@ -30,22 +34,6 @@
     {
         "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-mdpi_ic_launcher.png.flat",
         "source": "com.mayaboss.android.app-main-62:/mipmap-mdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.mayaboss.android.app-main-62:/mipmap-xhdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.mayaboss.android.app-merged_res-60:/layout_offer_item.xml.flat",
-        "source": "com.mayaboss.android.app-main-62:/layout/offer_item.xml"
-    },
-    {
-        "merged": "com.mayaboss.android.app-merged_res-60:/layout_activity_main.xml.flat",
-        "source": "com.mayaboss.android.app-main-62:/layout/activity_main.xml"
-    },
-    {
-        "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-xxhdpi_ic_launcher_round.png.flat",
-        "source": "com.mayaboss.android.app-main-62:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
         "merged": "com.mayaboss.android.app-merged_res-60:/mipmap-hdpi_ic_launcher_round.png.flat",

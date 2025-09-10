@@ -1,35 +1,37 @@
-# MayaBoss - Bitcoin Routing Android Application
+# MAYA Inc. - Autonomous Agent Corporation
 
 ## Overview
 
-MayaBoss is an Android application that gives phones three super-powers:
-1. Hear spend-signals (coffee, airtime, Uber)
-2. Offer discount if user pays via Lightning Network
-3. Collect routing + rebate fees in BTC only, no fiat touch
+MAYA Inc. transforms your Android phone into a **boardroom for autonomous agents**. You are the CEO. MAYA is the COO. Agents are subsidiaries. Crypto is profit.
+
+MAYA v0.2 — One mind, many hands.
 
 ## Project Structure
 
-This project implements the "Brick 2" functionality from the specification document:
-- Safe Lightning invoice + QR (testnet)
-- Uses pre-made testnet invoice string
-- ZXing library to convert string to QR bitmap
-- Shows QR in dialog with copy/share buttons
+This project implements an autonomous agent corporation with the following components:
+- **MAYA Core**: Python FastAPI backend server running on `localhost:8000`
+- **Dockerized Agents**: Autonomous bots that perform tasks and generate revenue
+- **Android App**: Jetpack Compose UI for managing agents and connecting to wallets
+- **WalletConnect Integration**: Secure connection to MetaMask/Trust Wallet for transaction approvals
 
 ## Features Implemented
 
-1. **QR Code Generation**: Using ZXing library to generate Lightning Network payment QR codes
-2. **Static Invoice Display**: Shows a pre-defined testnet Lightning invoice
-3. **Offer Display**: RecyclerView showing available merchant offers
-4. **Payment Notifications**: Simulated payment notifications
-5. **Cloud Worker Integration**: Retrofit client for fetching offers from cloud workers
+1. **Agent Management**: View, approve, and monitor autonomous agents
+2. **WalletConnect Integration**: Connect to Ethereum wallets via QR code
+3. **Real-time Balance Updates**: Fetch ETH balances from the Ethereum network via Infura
+4. **Decision Engine**: Approve/Reject agent actions every 10 minutes
+5. **Profit Tracking**: Monitor agent logs and treasury balance
+6. **Transaction Requests**: Send profits to your wallet via WalletConnect
 
 ## Technology Stack
 
-- **Mobile Platform**: Android (Kotlin)
-- **Lightning Network**: Testnet invoice (mainnet ready)
-- **QR Code Generation**: ZXing library
-- **Backend**: Retrofit for REST API communication
-- **UI**: Material Design components
+- **Mobile Platform**: Android (Kotlin, Jetpack Compose)
+- **Backend**: Python FastAPI with Web3.py
+- **Containerization**: Docker for agent deployment
+- **Blockchain**: Ethereum integration via Infura
+- **Wallet Integration**: WalletConnect v2 protocol
+- **Networking**: Retrofit for REST API communication
+- **UI**: Material Design 3 (Jetpack Compose)
 
 ## Building the Project
 
@@ -37,96 +39,137 @@ This project implements the "Brick 2" functionality from the specification docum
 
 - Android Studio
 - Android SDK
+- Python 3.7+
+- Docker (for running agents)
 - Kotlin plugin
 
-### Steps
+### Backend Setup
+
+1. Navigate to the maya-core directory:
+   ```
+   cd maya-core
+   ```
+
+2. Install Python dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Start the backend server:
+   ```
+   python main.py
+   ```
+
+4. Verify the server is running at `http://localhost:8000`
+
+### Android App Setup
 
 1. Open the project in Android Studio
-2. Sync the project with Gradle files
-3. Build the project using `Build > Make Project`
+2. Update the BASE_URL in `MAYAApiService.kt` with your PC's local IP address:
+   ```kotlin
+   private const val BASE_URL = "http://YOUR_LOCAL_IP:8000/"
+   ```
+3. Sync the project with Gradle files
+4. Build the project using `Build > Make Project`
 
 ### Dependencies
 
-All dependencies are specified in the `app/build.gradle` file:
-- AndroidX libraries
-- ZXing Android Embedded for QR code generation
-- Retrofit for network requests
-- Gson for JSON serialization
+All dependencies are specified in the respective files:
+- `app/build.gradle`: Android app dependencies
+- `maya-core/requirements.txt`: Python backend dependencies
 
-## Deployment to Huawei Device
-
-For detailed instructions on deploying to Huawei devices, please refer to the [Huawei Deployment Guide](HUAWEI_DEPLOYMENT.md).
+## Deployment to Android Device
 
 ### Quick Steps
-1. Enable Developer Options on Huawei device:
+1. Enable Developer Options on your Android device:
    - Go to Settings > About phone
    - Tap "Build number" 7 times
-   - Return to Settings > System & updates > Developer options
+   - Return to Settings > System > Developer options
    - Enable "USB debugging"
 
-2. (Optional) Disable USB debugging security check on Huawei devices:
-   - In Developer Options, find "Verify apps over USB" and disable it
-   - This prevents potential installation issues
+2. Connect device to computer via USB
 
-3. Connect device to computer via USB
-
-4. Verify device connection:
+3. Verify device connection:
    ```
    adb devices
    ```
    - If your device shows up, you're ready to proceed
    - If not, check USB cable and driver installation
 
-5. Build APK:
+4. Build APK:
    - In Android Studio: Build > Build Bundle(s) / APK(s) > Build APK
+   - Or use the build script: `build_apk.bat`
 
-6. Install APK on device:
+5. Install APK on device:
    ```
-   adb install path/to/your/app.apk
+   adb install app/build/outputs/apk/debug/app-debug.apk
    ```
    - For first-time installation, you may need to uninstall any existing version:
      ```
      adb uninstall com.mayaboss.android
      ```
 
-7. Launch the application:
-   - Find "MayaBoss" in your app drawer
+6. Launch the application:
+   - Find "MAYA" in your app drawer
    - Or launch via ADB:
      ```
      adb shell am start -n com.mayaboss.android/.MainActivity
      ```
 
-## Next Steps
+## Running the Complete System
 
-To implement the full functionality described in the specification:
+### Step 1: Start the Backend Server
+```
+cd maya-core
+python main.py
+```
 
-1. **Brick 3 - Cloud worker fleet**:
-   - Deploy RouteBot, RebateBot, and SwapBot Docker containers on Fly.io
-   - Implement proper REST endpoints for each worker
-   - Update the BASE_URL in OfferService.kt with actual worker URLs
+### Step 2: Connect Phone to Same WiFi as PC
+Find your PC's local IP address:
+```
+ipconfig
+```
+Look for the IPv4 Address (e.g., 192.168.1.5) and update `MAYAApiService.kt` accordingly.
 
-2. **Brick 4 - Mainnet flip**:
-   - Open Bitcoin mainnet channels
-   - Update the Lightning invoice to use mainnet
-   - Sign rebate deals with merchants
+### Step 3: Build and Install the Android App
+Use Android Studio or the build script to create and install the APK.
+
+### Step 4: Connect Your Wallet
+1. Launch the MAYA app
+2. Tap "Connect Wallet"
+3. Scan the QR code with MetaMask or Trust Wallet
+4. Approve the connection in your wallet
+
+### Step 5: Approve and Run Agents
+1. Tap "Approve" on the Faucet-Harvester agent
+2. Watch logs appear every 10 seconds
+3. After ~20 seconds, a dialog will appear asking you to continue execution
+4. Tap "Continue"
+5. Approve the transaction in MetaMask when requested
+6. Check that the treasury balance updates
+
+## Current Agents
+
+1. **A-01 Faucet-Harvester**: Claims ETH from testnet faucets every 10 minutes
+2. **A-13 Liquidity-Miner**: Provides liquidity to DEX pools for fees (locked until treasury ≥ 0.01 ETH)
 
 ## Risk Mitigation
 
 | Risk | Probability | Mitigation |
 |------|-------------|------------|
-| App crash on crypto call | Low | Uses static invoice until library stable |
-| Phone offline | Medium | Worker queues offers; retries when back |
-| Regulatory | Low | No fiat custody → no MSB |
-| BTC price drop | External | Income = sats, spend = sats, hedge optional |
+| Agent failure | Low | Docker containers with restart policies |
+| Network issues | Medium | Local backend with retry mechanisms |
+| Wallet connection loss | Low | Session persistence and reconnection |
+| Transaction failure | Low | Error handling and user notifications |
 
 ## Success Metrics
 
 | Milestone | Metric | Tool |
 |-----------|--------|------|
-| Brick 2 done | 21 sats received | Bluewallet testnet payment |
-| Brick 3 done | 3 offers / hour | Worker /metrics endpoint |
-| Brick 4 done | > 50 payments / week | Channel forwarding events |
-| Pilot done | 0.01 BTC / month creator slice | On-chain csv export |
+| Agent running | Agent logs appearing | App log viewer |
+| Profit generated | "📈 PROFIT:" lines in logs | App log viewer |
+| Transaction sent | ETH balance increase | Wallet balance |
+| Decision approval | User interaction with dialog | App UI |
 
 ## Contributing
 

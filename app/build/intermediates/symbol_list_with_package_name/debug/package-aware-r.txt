@@ -2945,7 +2945,6 @@ id clear_text
 id clip_horizontal
 id clip_vertical
 id clockwise
-id closeButton
 id closest
 id collapseActionView
 id compose_view_saveable_id_tag
@@ -3053,7 +3052,6 @@ id indeterminate
 id info
 id inspection_slot_table_set
 id invisible
-id invoiceTextView
 id inward
 id is_pooling_container_tag
 id italic
@@ -3071,7 +3069,6 @@ id linear
 id listMode
 id list_item
 id m3_side_sheet
-id mainLayout
 id marquee
 id masked
 id match_constraint
@@ -3097,7 +3094,6 @@ id material_timepicker_ok_button
 id material_timepicker_view
 id material_value_index
 id matrix
-id merchantBlurbTextView
 id message
 id middle
 id mini
@@ -3151,8 +3147,6 @@ id notification_background
 id notification_main_column
 id notification_main_column_container
 id off
-id offersRecyclerView
-id offersTitleTextView
 id on
 id onInterceptTouchReturnSwipe
 id outline
@@ -3176,21 +3170,17 @@ id postLayout
 id pressed
 id progress_circular
 id progress_horizontal
-id qrCodeImageView
 id radio
 id ratio
 id rectangles
-id refreshOffersButton
 id report_drawn
 id reverseSawtooth
 id right
 id rightToLeft
 id right_icon
 id right_side
-id riskTextView
 id rounded
 id row_index_key
-id satsExpectedTextView
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3233,7 +3223,6 @@ id sharedValueUnset
 id shortcut
 id showCustom
 id showHome
-id showQRButton
 id showTitle
 id sin
 id skipCollapsed
@@ -3300,7 +3289,6 @@ id textinput_suffix_text
 id time
 id title
 id titleDividerNoCustom
-id titleTextView
 id title_template
 id toggle
 id top
@@ -3457,7 +3445,6 @@ layout abc_search_dropdown_item_icons_2line
 layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
-layout activity_main
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog
@@ -3531,8 +3518,6 @@ layout notification_template_custom_big
 layout notification_template_icon_group
 layout notification_template_part_chronometer
 layout notification_template_part_time
-layout offer_item
-layout qr_dialog
 layout select_dialog_item_material
 layout select_dialog_multichoice_material
 layout select_dialog_singlechoice_material
@@ -3570,6 +3555,9 @@ string abc_searchview_description_voice
 string abc_shareactionprovider_share_with
 string abc_shareactionprovider_share_with_application
 string abc_toolbar_collapse_description
+string active_agents
+string agent_approved
+string agent_logs
 string androidx_startup
 string app_name
 string app_version
@@ -3587,6 +3575,7 @@ string clear_text_end_icon_content_description
 string close_drawer
 string close_sheet
 string collapsed
+string connect_wallet
 string default_error_message
 string default_popup_window_title
 string define_zxingandroidembedded
@@ -3717,7 +3706,7 @@ string path_password_eye
 string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
-string payment_received
+string profit_received
 string qr_code_title
 string range_end
 string range_start
@@ -3735,6 +3724,9 @@ string switch_role
 string tab
 string template_percent
 string title_activity_main
+string treasury_info
+string wallet_connected
+string wallet_disconnected
 string zxing_app_name
 string zxing_button_ok
 string zxing_msg_camera_framework_bug

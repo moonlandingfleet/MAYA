@@ -1,9 +1,17 @@
 <resources>
-    <string name="app_name">MAYA</string>
+    <string name="app_name">MAYA Inc.</string>
     <string name="title_activity_main">MAYA - Multi Agent Yield Advisor</string>
-    <string name="qr_code_title">Lightning Payment</string>
-    <string name="scan_to_pay">Scan to Pay with Lightning</string>
-    <string name="payment_received">Payment received!</string>
-    <string name="offers_title">Available Offers</string>
+    <string name="connect_wallet">Connect Wallet</string>
+    <string name="agent_approved">Agent approved and running</string>
+    <string name="profit_received">Profit received!</string>
+    <string name="active_agents">Active Agents</string>
+    <string name="agent_logs">Agent Logs</string>
+    <string name="treasury_info">Treasury Information</string>
+    <string name="wallet_connected">Wallet Connected</string>
+    <string name="wallet_disconnected">Wallet Disconnected</string>
+    <!-- Added missing string resources for XML layouts -->
     <string name="refresh_offers">Refresh Offers</string>
+    <string name="offers_title">Available Offers</string>
+    <string name="qr_code_title">Lightning Network QR Code</string>
+    <string name="scan_to_pay">Scan to Pay</string>
 </resources>
