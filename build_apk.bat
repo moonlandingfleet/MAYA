@@ -9,6 +9,9 @@ set PATH=%JAVA_HOME%\bin;%ANDROID_HOME%\platform-tools;%PATH%
 REM Change to the project directory
 cd /d C:\Users\bryan\Desktop\MAYA
 
+REM Stop any existing daemons
+gradlew.bat --stop
+
 REM Try to build the project
 echo Building the APK...
 gradlew.bat assembleDebug

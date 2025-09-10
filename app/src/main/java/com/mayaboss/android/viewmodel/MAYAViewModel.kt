@@ -1,7 +1,7 @@
 package com.mayaboss.android.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mayaboss.android.model.Proposal
 import com.mayaboss.android.model.WalletSession
@@ -13,8 +13,10 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import retrofit2.Response
 
-class MAYAViewModel(private val api: MAYAApiService, private val application: Application) : ViewModel() {
+class MAYAViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val api: MAYAApiService = MAYAApiService.create("http://192.168.0.101:8000/")
+    
     private val _proposals = MutableStateFlow<List<Proposal>>(emptyList())
     val proposals: StateFlow<List<Proposal>> = _proposals
 
@@ -87,5 +89,24 @@ class MAYAViewModel(private val api: MAYAApiService, private val application: Ap
                 onError(e)
             }
         }
+    }
+    
+    fun startAgent(agentId: String) {
+        viewModelScope.launch {
+            try {
+                val response = api.startAgent()
+                if (response.isSuccessful) {
+                    Timber.d("Agent $agentId started successfully")
+                } else {
+                    Timber.e("Failed to start agent $agentId: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Timber.e("Error starting agent $agentId: ${e.message}")
+            }
+        }
+    }
+    
+    fun isConnected(): Boolean {
+        return _walletSession.value?.connected ?: false
     }
 }

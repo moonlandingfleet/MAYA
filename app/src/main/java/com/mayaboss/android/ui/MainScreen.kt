@@ -35,19 +35,25 @@ fun MainScreen(viewModel: MAYAViewModel = viewModel()) {
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp)) // Added some spacing
+
         // Active Proposals
         Text(text = "Active Proposals", style = MaterialTheme.typography.titleMedium)
-        LazyColumn {
+        LazyColumn(Modifier.weight(1f)) { // Applied weight
             items(proposals) { proposal ->
-                Text(text = proposal.name)
+                // Changed to use ProposalCard
+                timber.log.Timber.d("MainScreen: Displaying proposal card for: ${proposal.name}") 
+                ProposalCard(proposal = proposal) 
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp)) // Added some spacing
+
         // Agent Logs
         Text(text = "Agent Logs (Last 10)", style = MaterialTheme.typography.titleMedium)
-        LazyColumn {
+        LazyColumn(Modifier.weight(1f)) { // Applied weight
             items(logs) { log ->
-                Text(text = log)
+                Text(text = log, modifier = Modifier.padding(vertical = 2.dp))
             }
         }
     }
@@ -58,18 +64,18 @@ fun ProposalCard(proposal: Proposal) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(16.dp) // This padding applies to the whole card
     ) {
         Text(text = proposal.name, style = MaterialTheme.typography.titleMedium)
-        Text(text = proposal.description)
-        Row {
+        Text(text = proposal.description) // This will show the description
+        Row { // Row for buttons
             Button(onClick = { /* Approve proposal logic */ }) {
                 Text("Approve")
             }
+            Spacer(modifier = Modifier.width(8.dp)) // Add some space between buttons
             Button(onClick = { /* Reject proposal logic */ }) {
                 Text("Reject")
             }
         }
     }
 }
-

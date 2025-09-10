@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = '1.9.0'  // Updated to match Compose compiler requirements
+    ext.kotlin_version = '1.9.22'  // Updated to match Compose compiler requirements
     // Repositories are now defined in settings.gradle -> pluginManagement
     // However, for buildscript dependencies to resolve, repositories often need to be explicitly defined here too.
     repositories {

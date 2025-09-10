@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mayaboss.android.viewmodel.MAYAViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionRequestScreen(viewModel: MAYAViewModel, onBack: () -> Unit) {
     var toAddress by remember { mutableStateOf("") }
