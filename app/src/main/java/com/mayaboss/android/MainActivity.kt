@@ -1,67 +1,30 @@
 package com.mayaboss.android
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
-import androidx.lifecycle.ViewModelProvider
-import com.mayaboss.android.network.MAYAApiService
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mayaboss.android.ui.MainScreen
-import com.mayaboss.android.ui.WalletConnectScreen
 import com.mayaboss.android.viewmodel.MAYAViewModel
-import androidx.lifecycle.ViewModel
 
-class MainActivity : AppCompatActivity() {
-    
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Use only Compose UI instead of mixing with traditional View system
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val apiService = MAYAApiService.create("http://192.168.0.101:8000/")
-                    val viewModel = ViewModelProvider(this, MAYAViewModelFactory(this.application, apiService))[MAYAViewModel::class.java]
-                    AppNavigation(viewModel)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val viewModel: MAYAViewModel = viewModel()
+                    MainScreen(viewModel = viewModel)
                 }
             }
         }
-    }
-    
-    @Composable
-    fun AppNavigation(viewModel: MAYAViewModel) {
-        var currentScreen by remember { mutableStateOf("main") }
-        
-        when (currentScreen) {
-            "main" -> MainScreen(
-                viewModel = viewModel,
-                onNavigateToWalletConnect = { currentScreen = "walletConnect" }
-            )
-            "walletConnect" -> WalletConnectScreen(
-                viewModel = viewModel,
-                onBack = { currentScreen = "main" }
-            )
-        }
-    }
-    
-    private fun setContent(content: @Composable () -> Unit) {
-        val composeView = ComposeView(this).apply {
-            setContent(content)
-        }
-        setContentView(composeView)
-    }
-}
-
-class MAYAViewModelFactory(private val application: android.app.Application, private val apiService: MAYAApiService) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MAYAViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return MAYAViewModel(apiService, application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

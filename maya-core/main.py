@@ -3,7 +3,6 @@ import json
 import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from web3 import Web3
 from typing import Dict, Any
 
 app = FastAPI()
@@ -16,9 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Web3 connection (using Infura as an example)
-# Replace with your Infura project ID or other Ethereum node provider
-w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/2db6b9cd6ba745f3b98f07e264e57785"))
+# Web3 connection disabled for now due to dependency conflicts
+# w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/2db6b9cd6ba745f3b98f07e264e57785"))
 
 # In-memory agent state
 AGENT_RUNNING = False
@@ -87,43 +85,26 @@ def get_logs():
 
 @app.get("/treasury")
 def get_treasury():
-    # Fetch real ETH balance for the treasury address
-    try:
-        if w3.is_connected():
-            balance_wei = w3.eth.get_balance(TREASURY_ADDRESS)
-            balance_eth = w3.from_wei(balance_wei, 'ether')
-            real_balance = float(balance_eth)
-        else:
-            # Fallback to simulated balance if not connected
-            real_balance = TREASURY_BALANCE
-    except Exception as e:
-        # Fallback to simulated balance if error occurs
-        real_balance = TREASURY_BALANCE
+    # Using simulated balance for now
+    real_balance = TREASURY_BALANCE
     
     return {
         "address": TREASURY_ADDRESS,
         "balance_eth": real_balance,
         "agents_contributed": ["A-01"],
         "last_updated": time.ctime(),
-        "wallet_connected": w3.is_connected()
+        "wallet_connected": False  # Disabled for now
     }
 
 @app.get("/wallet/balance")
 def get_wallet_balance(address: str):
-    """Fetch real ETH balance for a given wallet address"""
-    try:
-        if w3.is_connected():
-            balance_wei = w3.eth.get_balance(address)
-            balance_eth = w3.from_wei(balance_wei, 'ether')
-            return {
-                "address": address,
-                "balance_eth": float(balance_eth),
-                "last_updated": time.ctime()
-            }
-        else:
-            return {"error": "Not connected to Ethereum network"}
-    except Exception as e:
-        return {"error": str(e)}
+    """Fetch simulated ETH balance for a given wallet address"""
+    # Simulated balance for testing
+    return {
+        "address": address,
+        "balance_eth": 0.5,  # Simulated balance
+        "last_updated": time.ctime()
+    }
 
 @app.post("/agents/decide")
 def agent_decide(agent_id: str, decision: str):

@@ -4,5 +4,6 @@ data class WalletSession(
     val connected: Boolean,
     val address: String?,
     val chainId: String?,
-    val topic: String?
+    val topic: String?,
+    val balance_eth: Double? = null
 )

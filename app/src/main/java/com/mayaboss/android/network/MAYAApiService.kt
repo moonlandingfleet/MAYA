@@ -5,6 +5,7 @@ import com.mayaboss.android.model.Proposal
 import com.mayaboss.android.model.Treasury
 import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -13,13 +14,13 @@ import retrofit2.http.Query
 
 interface MAYAApiService {
     @GET("proposals")
-    fun getProposals(): Call<List<Proposal>>
+    suspend fun getProposals(): Response<List<Proposal>>
     
     @POST("agents/run")
-    fun startAgent(): Call<ResponseBody>
+    suspend fun startAgent(): Response<ResponseBody>
     
     @GET("agents/logs")
-    fun getLogs(): Call<LogResponse>
+    suspend fun getLogs(): Response<LogResponse>
     
     @GET("treasury")
     suspend fun getTreasury(): Treasury
