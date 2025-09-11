@@ -8,14 +8,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mayaboss.android.model.Proposal
+import com.mayaboss.android.model.Proposal // Ensure this is the updated model
 import com.mayaboss.android.viewmodel.MAYAViewModel
+import timber.log.Timber // Import Timber
 
 @Composable
 fun MainScreen(viewModel: MAYAViewModel = viewModel()) {
     // Fetch proposals and logs
+    // Make sure 'proposals' uses the new model structure after fetching
     val proposals by viewModel.proposals.collectAsState(initial = emptyList())
     val logs by viewModel.logs.collectAsState(initial = emptyList())
+    val walletSession by viewModel.walletSession.collectAsState()
+
 
     Column(
         modifier = Modifier
@@ -23,59 +27,50 @@ fun MainScreen(viewModel: MAYAViewModel = viewModel()) {
             .padding(16.dp)
     ) {
         Text(text = "MAYA v0.2 — One mind, many hands.", style = MaterialTheme.typography.headlineMedium)
-        
+
         // Wallet connection status
-        if (viewModel.walletSession.value?.connected == true) {
+        if (walletSession?.connected == true) {
             Text(text = "Wallet Connected", color = MaterialTheme.colorScheme.primary)
-            Text(text = "Address: ${viewModel.walletSession.value?.address}")
-            Text(text = "Balance: ${viewModel.walletSession.value?.balance_eth} ETH")
+            Text(text = "Address: ${walletSession?.address}")
+            Text(text = "Session ID: ${walletSession?.sessionId}") // Display sessionId
+            Text(text = "Balance: ${walletSession?.balance_eth ?: "N/A"} ETH") // Display balance
         } else {
-            Button(onClick = { /* Connect wallet logic */ }) {
+            Button(onClick = { viewModel.connectWallet(address = "0x1234567890123456789012345678901234567890", chainId = "1") }) {
                 Text("Connect Wallet")
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp)) // Added some spacing
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Active Proposals
         Text(text = "Active Proposals", style = MaterialTheme.typography.titleMedium)
-        LazyColumn(Modifier.weight(1f)) { // Applied weight
-            items(proposals) { proposal ->
-                // Changed to use ProposalCard
-                timber.log.Timber.d("MainScreen: Displaying proposal card for: ${proposal.name}") 
-                ProposalCard(proposal = proposal) 
+        if (proposals.isEmpty()) {
+            Text("No pending proposals from Agents.")
+        } else {
+            LazyColumn(Modifier.weight(1f)) {
+                items(proposals) { proposal ->
+                    // Pass viewModel to ProposalCard
+                    // This will now use the ProposalCard from ProposalCard.kt
+                    ProposalCard(proposal = proposal, viewModel = viewModel)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp)) // Added some spacing
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Agent Logs
         Text(text = "Agent Logs (Last 10)", style = MaterialTheme.typography.titleMedium)
-        LazyColumn(Modifier.weight(1f)) { // Applied weight
-            items(logs) { log ->
-                Text(text = log, modifier = Modifier.padding(vertical = 2.dp))
+        if (logs.isEmpty()){
+            Text("No agent logs to display.")
+        } else {
+            LazyColumn(Modifier.weight(1f)) {
+                items(logs) { log ->
+                    Text(text = log, modifier = Modifier.padding(vertical = 2.dp))
+                }
             }
         }
     }
 }
 
-@Composable
-fun ProposalCard(proposal: Proposal) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp) // This padding applies to the whole card
-    ) {
-        Text(text = proposal.name, style = MaterialTheme.typography.titleMedium)
-        Text(text = proposal.description) // This will show the description
-        Row { // Row for buttons
-            Button(onClick = { /* Approve proposal logic */ }) {
-                Text("Approve")
-            }
-            Spacer(modifier = Modifier.width(8.dp)) // Add some space between buttons
-            Button(onClick = { /* Reject proposal logic */ }) {
-                Text("Reject")
-            }
-        }
-    }
-}
+// The @Composable fun ProposalCard(...) definition that was here has been removed.
+// It will now use the definition from com.mayaboss.android.ui.ProposalCard.kt
