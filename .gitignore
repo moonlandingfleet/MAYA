@@ -108,3 +108,6 @@ maya-core/logs/
 # Temp files
 temp_*.zip
 temp_*.jar
+
+# Environment files
+.env

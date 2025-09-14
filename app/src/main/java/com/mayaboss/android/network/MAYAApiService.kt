@@ -1,8 +1,7 @@
 package com.mayaboss.android.network
 
-import com.mayaboss.android.model.LogResponse
-import com.mayaboss.android.model.Proposal
-import com.mayaboss.android.model.Treasury
+import com.mayaboss.android.model.*
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -15,8 +14,18 @@ import retrofit2.http.Query
 
 // Data models for API requests
 data class ProposalDecisionRequest(val proposal_id: String)
+data class FundingRequest(val council_id: String, val purpose: String, val cost_eth: Double, val expected_monthly_revenue_btc: Double)
+data class LoginRequest(val username: String, val password: String)
+data class LoginResponse(val token: String, val user_id: String)
 
 interface MAYAApiService {
+    // Authentication
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+
+    @POST("auth/logout")
+    suspend fun logout(): Response<ResponseBody>
+
     // Proposals
     @GET("proposals/pending")
     suspend fun getPendingProposals(): Response<List<Proposal>>
@@ -26,6 +35,23 @@ interface MAYAApiService {
 
     @POST("proposals/reject")
     suspend fun rejectProposal(@Body request: ProposalDecisionRequest): Response<Proposal>
+
+    // Council funding requests
+    @POST("council/{council_id}/request_funding")
+    suspend fun requestFunding(@Body request: FundingRequest): Response<Proposal>
+
+    // Sovereign review
+    @GET("proposals/sovereign_review")
+    suspend fun getSovereignReviewProposals(): Response<List<Proposal>>
+
+    @POST("proposals/{proposal_id}/sovereign_approve")
+    suspend fun sovereignApproveProposal(@Query("proposal_id") proposalId: String): Response<Proposal>
+
+    @POST("proposals/{proposal_id}/sovereign_reject")
+    suspend fun sovereignRejectProposal(@Query("proposal_id") proposalId: String): Response<Proposal>
+
+    @POST("proposals/{proposal_id}/funding_confirmed")
+    suspend fun confirmFunding(@Query("proposal_id") proposalId: String): Response<Proposal>
 
     // Agents
     @POST("agents/run")
@@ -37,6 +63,16 @@ interface MAYAApiService {
     // Treasury
     @GET("treasury")
     suspend fun getTreasury(): Response<Treasury>
+
+    @GET("treasury/transactions")
+    suspend fun getTreasuryTransactions(): Response<List<TreasuryTransaction>>
+
+    // Councils
+    @GET("councils")
+    suspend fun getCouncils(): Response<List<Council>>
+
+    @GET("councils/{council_id}/opportunities")
+    suspend fun getCouncilOpportunities(@Query("council_id") councilId: String): Response<List<CouncilOpportunity>>
 
     // Wallet
     @GET("wallet/balance")
@@ -52,12 +88,33 @@ interface MAYAApiService {
     suspend fun getWalletSession(@Query("session_id") sessionId: String): Response<WalletSessionInfo>
 
     companion object {
+        private lateinit var authInterceptor: AuthInterceptor
+
         fun create(baseUrl: String): MAYAApiService {
+            authInterceptor = AuthInterceptor()
+            
+            val okHttpClient = OkHttpClient.Builder()
+                .addInterceptor(authInterceptor)
+                .build()
+
             val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl)
+                .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
             return retrofit.create(MAYAApiService::class.java)
+        }
+
+        fun setAuthToken(token: String) {
+            if (::authInterceptor.isInitialized) {
+                authInterceptor.setAuthToken(token)
+            }
+        }
+
+        fun clearAuthToken() {
+            if (::authInterceptor.isInitialized) {
+                authInterceptor.clearAuthToken()
+            }
         }
     }
 }

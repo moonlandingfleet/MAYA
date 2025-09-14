@@ -1,0 +1,73 @@
+import jwt
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+def detailed_token_test():
+    """
+    Detailed test of JWT validation to understand what's happening
+    """
+    # This is the token we got from signing in
+    token = "eyJhbGciOiJIUzI1NiIsImtpZCI6IjFwcjFDVWlETEFaYXJhYlkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2tzcnZ0dnFxaWt3amJxenBnYWNzLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlZWMwODkwNS0wZTIyLTQyYWItOGM0Ni1lMjBlZDViODgwNDUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU3Njg1MjAzLCJpYXQiOjE3NTc2ODE2MDMsImVtYWlsIjoidGVzdC11c2VyLTEyM0B0ZXN0LWRvbWFpbi5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoidGVzdC11c2VyLTEyM0B0ZXN0LWRvbWFpbi5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiZWVjMDg5MDUtMGUyMi00MmFiLThjNDYtZTIwZWQ1Yjg4MDQ1In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NTc2ODE2MDN9XSwic2Vzc2lvbl9pZCI6IjcyNTg5ZmIxLTI0ODQtNDMxYy1iMzQ4LTRiN2Y1OTZmYWFmOCIsImlzX2Fub255bW91cyI6ZmFsc2V9.NG6FPNtbWS0Ueb44o_g-Hggww16u-g4WrGnA4xon1PY"
+    
+    # Get the keys from environment
+    anon_key = os.getenv("SUPABASE_KEY")
+    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    
+    print("=== TOKEN ANALYSIS ===")
+    print("Token header:", jwt.get_unverified_header(token))
+    print("Token payload (unverified):", jwt.decode(token, options={"verify_signature": False}))
+    
+    print("\n=== KEY ANALYSIS ===")
+    print("Anon key:", anon_key)
+    print("Service role key:", service_role_key)
+    
+    # Let's try to understand what key was used to sign this token
+    # We'll try to decode with different algorithms and keys
+    
+    print("\n=== VALIDATION ATTEMPTS ===")
+    
+    # Try HS256 with anon key
+    print("1. HS256 with anon key:")
+    try:
+        payload = jwt.decode(token, anon_key, algorithms=["HS256"], 
+                           audience="authenticated", 
+                           issuer="https://ksrvtvqqikwjbqzpgacs.supabase.co/auth/v1")
+        print("   SUCCESS!")
+        print("   Payload:", payload)
+    except Exception as e:
+        print("   FAILED:", e)
+    
+    # Try HS256 with service role key
+    print("2. HS256 with service role key:")
+    try:
+        payload = jwt.decode(token, service_role_key, algorithms=["HS256"], 
+                           audience="authenticated", 
+                           issuer="https://ksrvtvqqikwjbqzpgacs.supabase.co/auth/v1")
+        print("   SUCCESS!")
+        print("   Payload:", payload)
+    except Exception as e:
+        print("   FAILED:", e)
+    
+    # Try without audience and issuer validation
+    print("3. HS256 with service role key (no audience/issuer validation):")
+    try:
+        payload = jwt.decode(token, service_role_key, algorithms=["HS256"])
+        print("   SUCCESS!")
+        print("   Payload:", payload)
+    except Exception as e:
+        print("   FAILED:", e)
+    
+    # Try without any validation
+    print("4. Decode without signature verification:")
+    try:
+        payload = jwt.decode(token, options={"verify_signature": False})
+        print("   SUCCESS!")
+        print("   Payload:", payload)
+    except Exception as e:
+        print("   FAILED:", e)
+
+if __name__ == "__main__":
+    detailed_token_test()

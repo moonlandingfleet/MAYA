@@ -22,6 +22,10 @@ This project implements an autonomous agent corporation with the following compo
 4. **Decision Engine**: Approve/Reject agent actions every 10 minutes
 5. **Profit Tracking**: Monitor agent logs and treasury balance
 6. **Transaction Requests**: Send profits to your wallet via WalletConnect
+7. **Digital Ministries Management**: Store and manage information about the 12 Digital Ministries
+8. **Proposal Tracking**: Manage funding requests from Councils
+9. **Treasury Management**: Log all financial movements
+10. **Opportunity Tracking**: Record potential opportunities before they become formal proposals
 
 ## Technology Stack
 
@@ -30,6 +34,7 @@ This project implements an autonomous agent corporation with the following compo
 - **Containerization**: Docker for agent deployment
 - **Blockchain**: Ethereum integration via Infura
 - **Wallet Integration**: WalletConnect v2 protocol
+- **Database**: Supabase (PostgreSQL) for persistent data storage
 - **Networking**: Retrofit for REST API communication
 - **UI**: Material Design 3 (Jetpack Compose)
 
@@ -42,6 +47,7 @@ This project implements an autonomous agent corporation with the following compo
 - Python 3.7+
 - Docker (for running agents)
 - Kotlin plugin
+- Supabase account (for database integration)
 
 ### Backend Setup
 
@@ -55,12 +61,29 @@ This project implements an autonomous agent corporation with the following compo
    pip install -r requirements.txt
    ```
 
-3. Start the backend server:
+3. Install Supabase dependencies:
+   ```
+   pip install supabase==2.4.5
+   ```
+
+4. Set up your Supabase project:
+   - Create a new project at https://supabase.com
+   - Get your project URL and API key
+   - Set environment variables:
+     ```
+     export SUPABASE_URL=your_project_url
+     export SUPABASE_KEY=your_api_key
+     ```
+
+5. Deploy the database schema:
+   - Execute the SQL in `maya-core/maya_supabase/schema.sql` in your Supabase SQL editor
+
+6. Start the backend server:
    ```
    python main.py
    ```
 
-4. Verify the server is running at `http://localhost:8000`
+7. Verify the server is running at `http://localhost:8000`
 
 ### Android App Setup
 
@@ -124,6 +147,17 @@ cd maya-core
 python main.py
 ```
 
+### Supabase Integration
+
+The MAYA backend includes a complete Supabase integration for managing the Digital Ministries ecosystem:
+
+1. **Councils API**: Manage the 12 Digital Ministries
+2. **Proposals API**: Handle funding requests from Councils
+3. **Treasury API**: Track all financial movements
+4. **Opportunities API**: Record potential opportunities
+
+All endpoints are available under the `/supabase` prefix. See `maya-core/maya_supabase/USAGE.md` for detailed API documentation.
+
 ### Step 2: Connect Phone to Same WiFi as PC
 Find your PC's local IP address:
 ```
@@ -178,6 +212,17 @@ Use Android Studio or the build script to create and install the APK.
 3. Commit your changes
 4. Push to the branch
 5. Create a new Pull Request
+
+## Documentation
+
+For detailed information about specific components, see:
+
+- `maya-core/maya_supabase/README.md` - Supabase integration documentation
+- `maya-core/maya_supabase/USAGE.md` - Usage guide for the Supabase integration
+- `maya-core/maya_supabase/SUMMARY.md` - Implementation summary
+- `WALLETCONNECT_INTEGRATION.md` - WalletConnect implementation details
+- `RUNNING_THE_APP.md` - Detailed running instructions
+- `TESTING_GUIDE.md` - Testing procedures
 
 ## License
 

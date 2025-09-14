@@ -2,103 +2,65 @@
 import subprocess
 import json
 import time
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, Any, List
-from web3 import Web3 # Re-enabled Web3
+from pydantic import BaseModel # Keeping BaseModel for other models not yet replaced
+from typing import Dict, Any, List, Optional
+from web3 import Web3
 from decimal import Decimal
+from datetime import datetime # Added for timestamping
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+import os # Already here, good.
+
+load_dotenv()
+
+# --- Custom Supabase Service and Models ---
+from maya_supabase.database import SupabaseService
+from maya_supabase.models import Proposal as SupabaseProposal # Alias for clarity
+from maya_supabase.models import Council as SupabaseCouncil # If we need it soon
+from maya_supabase.models import TreasuryTransaction as SupabaseTreasuryTransaction # For later
+
+# --- Authentication --- NEWLY ADDED ---
+from auth import verify_token_and_get_payload # verify_token_and_get_payload returns the whole payload
 
 # --- Configuration ---
-INFURA_URL = "https://mainnet.infura.io/v3/2db6b9cd6ba745f3b98f07e264e57785"
-TREASURY_ADDRESS = "0x16B3d93d02FB58f7aCe79157E74Eb275D2c3F734" # The Vault
+INFURA_URL = os.getenv("INFURA_URL", "https://mainnet.infura.io/v3/2db6b9cd6ba745f3b98f07e264e57785") 
+TREASURY_ADDRESS = os.getenv("TREASURY_ADDRESS", "0x16B3d93d02FB58f7aCe79157E74Eb275D2c3F734")
 
-# --- The Royal Charter's Data Structures ---
-
-class Proposal(BaseModel):
-    id: str
-    agent_id: str
-    purpose: str
-    cost_eth: float
-    expected_monthly_revenue_eth: float
-    status: str  # pending, awaiting_approval, funded, rejected
-
-class Treasury(BaseModel):
+class Treasury(BaseModel): # This is fine as it's for Infura response
     address: str
     balance_eth: float
 
 # --- The Chancellor's Management Classes ---
-
-class ProposalManager:
-    """Manages the lifecycle of agent proposals."""
-    def __init__(self):
-        self._proposals: Dict[str, Proposal] = {
-            "prop_001": Proposal(
-                id="prop_001",
-                agent_id="A-01",
-                purpose="Claim testnet ETH to bootstrap initial operations.",
-                cost_eth=0.0,
-                expected_monthly_revenue_eth=0.1,
-                status="pending"
-            ),
-            "prop_002": Proposal(
-                id="prop_002",
-                agent_id="A-13",
-                purpose="Provide liquidity to DEX pools for fee generation.",
-                cost_eth=0.05,
-                expected_monthly_revenue_eth=0.5,
-                status="pending"
-            )
-        }
-
-    def get_pending_proposals(self) -> List[Proposal]:
-        return [p for p in self._proposals.values() if p.status == "pending"]
-
-    def approve_proposal(self, proposal_id: str) -> Proposal:
-        if proposal_id not in self._proposals:
-            raise HTTPException(status_code=404, detail="Proposal not found")
-        proposal = self._proposals[proposal_id]
-        proposal.status = "awaiting_approval"
-        print(f"Proposal {proposal_id} marked for approval. Awaiting transaction from Sovereign.")
-        return proposal
-
-    def reject_proposal(self, proposal_id: str) -> Proposal:
-        if proposal_id not in self._proposals:
-            raise HTTPException(status_code=404, detail="Proposal not found")
-        proposal = self._proposals[proposal_id]
-        proposal.status = "rejected"
-        print(f"Proposal {proposal_id} rejected by decree of the Sovereign.")
-        return proposal
-
-class Treasurer:
-    """Manages the Digital Kingdom's treasury."""
+class Treasurer: # Unchanged for now
     def __init__(self):
         self._treasury = Treasury(
             address=TREASURY_ADDRESS,
             balance_eth=0.0012  # Default/fallback balance
         )
+        infura_url_to_use = os.getenv("INFURA_URL_ACTUAL", INFURA_URL) 
         try:
-            self.w3 = Web3(Web3.HTTPProvider(INFURA_URL))
-            # For web3.py v5.x use self.w3.isConnected()
-            # For web3.py v6.x, use: if not self.w3.provider.is_connected():
-            if not self.w3.isConnected():
+            self.w3 = Web3(Web3.HTTPProvider(infura_url_to_use))
+            # TODO: Verify this call based on your web3.py version (v5 vs v6 for isConnected)
+            if not self.w3.isConnected(): 
                 print("Warning: Failed to connect to Infura. Treasury balance will be simulated.")
-                self.w3 = None # Ensure w3 is None if initial connection check fails
+                self.w3 = None
             else:
                 print("Successfully connected to Infura. Live treasury balance will be attempted.")
         except Exception as e:
             print(f"Warning: Error connecting to Infura during init: {e}. Treasury balance will be simulated.")
-            self.w3 = None # Ensure w3 is None if connection failed
+            self.w3 = None
 
     def get_treasury_info(self) -> Treasury:
-        # For web3.py v5.x use self.w3 and self.w3.isConnected()
-        # For web3.py v6.x, use: if self.w3 and self.w3.provider.is_connected():
+        # TODO: Verify this call based on your web3.py version (v5 vs v6 for isConnected)
         if self.w3 and self.w3.isConnected(): 
             try:
                 checksum_address = self.w3.toChecksumAddress(self._treasury.address)
                 balance_wei = self.w3.eth.getBalance(checksum_address)
                 balance_eth = self.w3.fromWei(balance_wei, 'ether')
-                self._treasury.balance_eth = float(balance_eth) # Update with live balance
+                self._treasury.balance_eth = float(balance_eth)
                 print(f"Successfully fetched live balance from Infura: {self._treasury.balance_eth} ETH")
             except Exception as e:
                 print(f"Error fetching balance from Infura: {e}. Returning last known or default balance.")
@@ -106,42 +68,160 @@ class Treasurer:
             print("Not connected to Infura or w3 provider not initialized. Using simulated/last known balance.")
         return self._treasury
 
+
 # --- FastAPI App - The Chancellor's Office ---
-
 app = FastAPI(title="MAYA Core - The Chancellor's Office")
-proposal_manager = ProposalManager()
-treasurer = Treasurer()
 
-app.add_middleware(
+db_service = SupabaseService() # Instantiate our custom Supabase service
+treasurer = Treasurer() # Keep current treasurer
+
+if not db_service.client:
+    print("FATAL: Supabase client in db_service not initialized. Check .env file and Supabase credentials.")
+
+app.add_middleware( 
     CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 
-# --- Endpoint Definitions from the Charter ---
+# --- NEW AND REFACTORED ENDPOINT DEFINITIONS (NOW PROTECTED) ---
 
-class ProposalDecisionRequest(BaseModel):
-    proposal_id: str
+class AgentFundingRequest(BaseModel):
+    purpose: str
+    cost_eth: float 
+    expected_monthly_revenue_btc: float 
+    details_json: Optional[Dict[str, Any]] = None
 
-@app.get("/proposals/pending", response_model=List[Proposal])
-def get_pending_proposals_route():
-    return proposal_manager.get_pending_proposals()
+class FundingConfirmationRequest(BaseModel):
+    transaction_hash: str
 
-@app.post("/proposals/approve", response_model=Proposal)
-def approve_proposal_route(request: ProposalDecisionRequest):
-    return proposal_manager.approve_proposal(request.proposal_id)
+@app.post("/council/{council_id}/request_funding", response_model=SupabaseProposal)
+async def council_request_funding_route(
+    council_id: str, 
+    request: AgentFundingRequest,
+    payload: Dict[str, Any] = Depends(verify_token_and_get_payload)
+):
+    requesting_agent_supa_id = payload.get("sub")
+    print(f"Funding request received from authenticated agent Supabase ID: {requesting_agent_supa_id} for council: {council_id}")
+    # TODO: Add logic to map requesting_agent_supa_id to council_id or verify permissions
 
-@app.post("/proposals/reject", response_model=Proposal)
-def reject_proposal_route(request: ProposalDecisionRequest):
-    return proposal_manager.reject_proposal(request.proposal_id)
+    if not db_service.client:
+        raise HTTPException(status_code=503, detail="Supabase service not available.")
+
+    roi_score = 0.0
+    if request.cost_eth > 0: 
+        eth_to_btc_rate_placeholder = 0.05 
+        cost_btc_equivalent = request.cost_eth * eth_to_btc_rate_placeholder
+        if cost_btc_equivalent > 0:
+             roi_score = request.expected_monthly_revenue_btc / cost_btc_equivalent
+    else: 
+        roi_score = 99999.0 
+
+    new_proposal_data = SupabaseProposal(
+        council_id=council_id,
+        purpose=request.purpose,
+        cost_eth=request.cost_eth,
+        expected_monthly_revenue_btc=request.expected_monthly_revenue_btc,
+        status="PENDING_REVIEW", 
+        details_json=request.details_json,
+        submitted_at=datetime.utcnow(),
+        last_status_update_at=datetime.utcnow(),
+        roi_score=roi_score 
+    )
+
+    created_proposal = db_service.create_proposal(new_proposal_data)
+    if not created_proposal:
+        raise HTTPException(status_code=500, detail="Failed to create proposal in database.")
+    
+    print(f"New proposal {created_proposal.id} submitted by council {council_id} (Agent Supabase ID: {requesting_agent_supa_id}) for PENDING_REVIEW.")
+    return created_proposal
+
+@app.get("/proposals/sovereign_review", response_model=List[SupabaseProposal])
+async def get_proposals_for_sovereign_review_route(payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
+    print(f"Sovereign review requested by user Supabase ID: {payload.get('sub')}")
+    if not db_service.client:
+        raise HTTPException(status_code=503, detail="Supabase service not available.")
+    
+    try:
+        all_proposals = db_service.get_all_proposals()         
+        review_proposals = [
+            p for p in all_proposals 
+            if p.status in ["AWAITING_SOVEREIGN_APPROVAL", "PENDING_REVIEW"] and p.roi_score is not None
+        ]
+        review_proposals.sort(key=lambda p: p.roi_score, reverse=True)
+        return review_proposals
+    except Exception as e:
+        print(f"Error fetching proposals for sovereign review: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching proposals.")
+
+@app.post("/proposals/{proposal_id}/sovereign_approve", response_model=SupabaseProposal)
+async def sovereign_approve_proposal_route(proposal_id: str, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
+    print(f"Sovereign approval for {proposal_id} by user Supabase ID: {payload.get('sub')}")
+    # TODO: Add logic to ensure only Sovereign can call this (e.g., check sub against known Sovereign Supabase ID or a role in payload)
+    if not db_service.client:
+        raise HTTPException(status_code=503, detail="Supabase service not available.")
+
+    updated_proposal = db_service.update_proposal(
+        proposal_id, 
+        {
+            "status": "APPROVED_PENDING_FUNDING", 
+            "last_status_update_at": datetime.utcnow(),
+            "sovereign_approved_at": datetime.utcnow()
+        }
+    )
+    if not updated_proposal:
+        raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found or update failed.")
+    
+    print(f"Proposal {proposal_id} status changed to APPROVED_PENDING_FUNDING by user {payload.get('sub')}.")
+    return updated_proposal
+
+@app.post("/proposals/{proposal_id}/sovereign_reject", response_model=SupabaseProposal)
+async def sovereign_reject_proposal_route(proposal_id: str, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
+    print(f"Sovereign rejection for {proposal_id} by user Supabase ID: {payload.get('sub')}")
+    # TODO: Add logic to ensure only Sovereign can call this
+    if not db_service.client:
+        raise HTTPException(status_code=503, detail="Supabase service not available.")
+
+    updated_proposal = db_service.update_proposal(
+        proposal_id,
+        {"status": "REJECTED", "last_status_update_at": datetime.utcnow()}
+    )
+    if not updated_proposal:
+        raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found or update failed.")
+    
+    print(f"Proposal {proposal_id} status changed to REJECTED by user {payload.get('sub')}.")
+    return updated_proposal
+
+@app.post("/proposals/{proposal_id}/funding_confirmed", response_model=SupabaseProposal)
+async def funding_confirmed_route(proposal_id: str, request: FundingConfirmationRequest, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
+    print(f"Funding confirmation for {proposal_id} by user Supabase ID: {payload.get('sub')}")
+    # TODO: Add logic to ensure only Sovereign or authorized entity can call this
+    if not db_service.client:
+        raise HTTPException(status_code=503, detail="Supabase service not available.")
+
+    updated_proposal = db_service.update_proposal(
+        proposal_id,
+        {
+            "status": "FUNDED_ACTIVE",
+            "funding_transaction_hash": request.transaction_hash,
+            "last_status_update_at": datetime.utcnow()
+        }
+    )
+    if not updated_proposal:
+        raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found or update failed.")
+    
+    print(f"Proposal {proposal_id} status changed to FUNDED_ACTIVE by user {payload.get('sub')}. TxHash: {request.transaction_hash}")
+    return updated_proposal
 
 @app.get("/treasury", response_model=Treasury)
-def get_treasury_route():
+async def get_treasury_route(payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
+    print(f"Treasury info requested by user Supabase ID: {payload.get('sub')}")
     return treasurer.get_treasury_info()
 
-# --- Legacy & Agent-Facing Endpoints (To Be Refactored) ---
+# --- Legacy & Agent-Facing Endpoints (Consider if these need auth or refactoring) ---
 
-@app.get("/agents/logs")
+@app.get("/agents/logs") # Consider if this needs protection
 def get_logs_route():
+    # This currently calls a fixed localhost URL, may need rethinking for multiple agents
     result = subprocess.run(
         "curl -s http://localhost:8080/log",
         shell=True, capture_output=True, text=True
@@ -154,11 +234,11 @@ def get_logs_route():
     except:
         return {"logs": ["Failed to parse agent logs"]}
 
-@app.post("/agents/run")
+@app.post("/agents/run") # Consider if this needs protection
 def start_agent_route():
     return {"status": "success", "message": "Agent start command issued"}
 
-# --- Wallet Endpoints (Placeholder Implementation) ---
+# --- Wallet Endpoints (Placeholder - Likely need auth if they become real) ---
 
 class WalletBalanceResponse(BaseModel):
     address: str
@@ -214,4 +294,5 @@ def get_wallet_session_route(session_id: str):
 # --- Server Startup ---
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) # Port changed back to 8000
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
+

@@ -1,7 +1,9 @@
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
+
 android {
     namespace 'com.mayaboss.android'
     compileSdk 34
@@ -23,14 +25,34 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            debuggable true
+            buildConfigField "String", "WC_PROJECT_ID", "\"d3e4065175d57a7bbde46a5cfc71913a\""
+        }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+    
+    flavorDimensions "version"
+    productFlavors {
+        production {
+            dimension "version"
+            applicationIdSuffix ""
+            versionNameSuffix ""
+        }
+        dev { // Renamed from 'testing' to 'dev'
+            dimension "version"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            buildConfigField "boolean", "TESTING_MODE", "true"
+        }
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
+
+    // Java 17 Toolchain Configuration
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
     }
+
     buildFeatures {
         viewBinding true
         compose true
@@ -53,6 +75,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.cardview:cardview:1.0.0'
     
+    // Lifecycle components
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    
     // ZXing library for QR code generation
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     
@@ -68,7 +94,6 @@ dependencies {
     
     // ViewModel
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
     
     // Timber for logging
     implementation 'com.jakewharton.timber:timber:5.0.1'
@@ -79,8 +104,9 @@ dependencies {
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.google.code.gson:gson:2.10.1' // Added Gson dependency
     
-    // WalletConnect dependencies - temporarily disabled due to build issues
+    // WalletConnect v2 SDK
     // implementation 'com.walletconnect:android-core:1.14.0'
     // implementation 'com.walletconnect:sign:1.14.0'
     

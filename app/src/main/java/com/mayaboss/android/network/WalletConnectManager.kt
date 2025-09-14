@@ -68,7 +68,7 @@ class WalletConnectManager private constructor() {
             .apply()
     }
 
-    fun connect(onUri: (String) -> Unit, onError: (Throwable) -> Unit) {
+    fun connect(onUri: (String) -> Unit) { // Removed onError parameter
         // Mock WalletConnect implementation
         val mockUri = "wc:mock-connection-uri" // This URI is for a true WalletConnect SDK flow
         onUri(mockUri)
