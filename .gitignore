@@ -89,6 +89,11 @@ __pycache__/
 .coverage
 .pytest_cache/
 
+# Virtual environments
+*-py310/
+venv*/
+env*/
+
 # Docker
 *.dockerignore
 docker-compose.override.yml
@@ -96,14 +101,14 @@ docker-compose.override.yml
 # Qoder files
 .qoder/
 
-# Build artifacts for maya-core
-maya-core/dist/
-maya-core/build/
+# Build artifacts for backend
+backend/dist/
+backend/build/
 
 # Logs
 *.log
 logs/
-maya-core/logs/
+backend/logs/
 
 # Temp files
 temp_*.zip
