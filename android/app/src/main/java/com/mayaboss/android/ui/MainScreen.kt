@@ -9,7 +9,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mayaboss.android.BuildConfig
+import com.mayaboss.android.model.Council
 import com.mayaboss.android.model.CouncilOpportunity
 import com.mayaboss.android.model.Proposal
 import com.mayaboss.android.viewmodel.MAYAViewModel
@@ -87,6 +92,50 @@ fun LoginScreen(viewModel: MAYAViewModel) {
 
 @Composable
 fun AuthenticatedMainScreen(viewModel: MAYAViewModel) {
+    val navController = rememberNavController()
+    
+    NavHost(navController = navController, startDestination = "main") {
+        composable("main") {
+            MainContentScreen(
+                viewModel = viewModel,
+                onCouncilSelected = { council ->
+                    navController.navigate("council/${council.id}")
+                }
+            )
+        }
+        composable("council/{councilId}") { backStackEntry ->
+            val councilId = backStackEntry.arguments?.getString("councilId")
+            val councils by viewModel.councils.collectAsState(initial = emptyList())
+            val selectedCouncil = councils.find { it.id == councilId }
+            
+            if (selectedCouncil != null) {
+                CouncilScreen(
+                    council = selectedCouncil,
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            } else {
+                // Handle case where council is not found
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Council not found")
+                    Button(onClick = { navController.popBackStack() }) {
+                        Text("Go Back")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainContentScreen(
+    viewModel: MAYAViewModel,
+    onCouncilSelected: (Council) -> Unit
+) {
     // Fetch proposals and logs
     val proposals by viewModel.proposals.collectAsState(initial = emptyList())
     val councils by viewModel.councils.collectAsState(initial = emptyList())
@@ -174,7 +223,7 @@ fun AuthenticatedMainScreen(viewModel: MAYAViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // Councils
-        Text(text = "Councils", style = MaterialTheme.typography.titleMedium)
+        Text(text = "The Twelve Councils", style = MaterialTheme.typography.titleMedium)
         if (councils.isEmpty()) {
             Text("No councils available.")
         } else {
@@ -188,19 +237,20 @@ fun AuthenticatedMainScreen(viewModel: MAYAViewModel) {
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(text = council.council_name, style = MaterialTheme.typography.titleMedium)
-                            Text(text = council.domain_description, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Role: ${council.ethical_boundary}", style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Domain: ${council.domain_description}", style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Revenue Model: ${council.revenue_model_description}", style = MaterialTheme.typography.bodySmall)
                             Text(text = "Status: ${council.status}", style = MaterialTheme.typography.bodySmall)
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             
                             Button(
                                 onClick = { 
-                                    // Load opportunities for this council
-                                    viewModel.loadCouncilOpportunities(council.id)
+                                    onCouncilSelected(council)
                                 },
                                 modifier = Modifier.align(Alignment.End)
                             ) {
-                                Text("View Opportunities")
+                                Text("View Details")
                             }
                         }
                     }

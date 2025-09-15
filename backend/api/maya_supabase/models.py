@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 import uuid
 
@@ -27,6 +27,14 @@ class Proposal(BaseModel):
     sovereign_approved_at: Optional[datetime]  # nullable
     funding_transaction_hash: Optional[str]  # nullable
     roi_score: float  # calculated by MAYA, for ranking
+    
+    # Enhanced fields for digital kingdom
+    strategic_impact: Optional[str]  # Description of strategic impact
+    resource_dependencies: Optional[List[str]]  # List of resources needed
+    inter_council_collaborations: Optional[List[str]]  # List of councils involved
+    implementation_timeline_days: Optional[int]  # Expected implementation time
+    risk_assessment: Optional[str]  # Risk assessment description
+    success_metrics: Optional[List[str]]  # Key success metrics
 
 class TreasuryTransaction(BaseModel):
     """Model for the treasury_transactions table (Log of all financial movements)"""
@@ -39,7 +47,7 @@ class TreasuryTransaction(BaseModel):
     amount: float  # positive for inflow, negative for outflow to treasury
     related_onchain_transaction_hash: Optional[str]  # nullable
     description: str
-    status: str  # e.g., "PENDING", "COMPLETED", "FAILED"
+    status: str   # e.g., "PENDING", "COMPLETED", "FAILED"
 
 class CouncilOpportunity(BaseModel):
     """Model for the council_opportunities table (Optional, if probes report opportunities before they become formal proposals)"""
@@ -50,3 +58,8 @@ class CouncilOpportunity(BaseModel):
     potential_cost_eth: Optional[float]  # nullable
     potential_revenue_btc: Optional[float]  # nullable
     status: str  # e.g., "NEW", "UNDER_REVIEW_BY_MAYA", "CONVERTED_TO_PROPOSAL", "DISMISSED"
+    
+    # Enhanced fields for inter-council collaboration
+    resource_exchange_proposal: Optional[str]  # Description of resource exchange
+    collaborating_councils: Optional[List[str]]  # List of councils to collaborate with
+    strategic_value: Optional[float]  # Strategic value score (0-100)

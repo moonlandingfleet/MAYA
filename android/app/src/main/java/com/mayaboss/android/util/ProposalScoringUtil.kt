@@ -23,20 +23,26 @@ object ProposalScoringUtil {
      * Calculate a comprehensive score for a proposal based on multiple factors
      */
     fun calculateProposalScore(proposal: Proposal): Double {
-        // Base ROI score (40% weight)
+        // Base ROI score (30% weight)
         val roi = calculateROI(proposal)
-        val roiScore = normalizeROI(roi) * 0.4
+        val roiScore = normalizeROI(roi) * 0.3
         
-        // Revenue stability score (30% weight)
-        val revenueStabilityScore = calculateRevenueStabilityScore(proposal) * 0.3
+        // Revenue stability score (20% weight)
+        val revenueStabilityScore = calculateRevenueStabilityScore(proposal) * 0.2
         
-        // Cost efficiency score (20% weight)
-        val costEfficiencyScore = calculateCostEfficiencyScore(proposal) * 0.2
+        // Cost efficiency score (15% weight)
+        val costEfficiencyScore = calculateCostEfficiencyScore(proposal) * 0.15
         
-        // Risk score (10% weight)
-        val riskScore = calculateRiskScore(proposal) * 0.1
+        // Strategic impact score (20% weight)
+        val strategicImpactScore = calculateStrategicImpactScore(proposal) * 0.2
         
-        return max(0.0, roiScore + revenueStabilityScore + costEfficiencyScore - riskScore)
+        // Collaboration value score (10% weight)
+        val collaborationScore = calculateCollaborationScore(proposal) * 0.1
+        
+        // Risk score (5% weight)
+        val riskScore = calculateRiskScore(proposal) * 0.05
+        
+        return max(0.0, roiScore + revenueStabilityScore + costEfficiencyScore + strategicImpactScore + collaborationScore - riskScore)
     }
     
     /**
@@ -83,6 +89,42 @@ object ProposalScoringUtil {
     }
     
     /**
+     * Calculate strategic impact score based on proposal details
+     */
+    private fun calculateStrategicImpactScore(proposal: Proposal): Double {
+        // For now, we'll use a simple heuristic
+        // In a real implementation, this would be based on the strategic_impact field
+        var score = 0.5 // Default score
+        
+        // Increase score for proposals with inter-council collaborations
+        if (proposal.inter_council_collaborations?.isNotEmpty() == true) {
+            score += 0.3
+        }
+        
+        // Increase score for proposals with resource dependencies (shows planning)
+        if (proposal.resource_dependencies?.isNotEmpty() == true) {
+            score += 0.2
+        }
+        
+        return minOf(1.0, score)
+    }
+    
+    /**
+     * Calculate collaboration value score
+     */
+    private fun calculateCollaborationScore(proposal: Proposal): Double {
+        // Score based on number of inter-council collaborations
+        val collaborationCount = proposal.inter_council_collaborations?.size ?: 0
+        // Max score for 5 or more collaborations
+        return when {
+            collaborationCount >= 5 -> 1.0
+            collaborationCount >= 3 -> 0.7
+            collaborationCount >= 1 -> 0.4
+            else -> 0.0
+        }
+    }
+    
+    /**
      * Calculate risk score based on various factors
      */
     private fun calculateRiskScore(proposal: Proposal): Double {
@@ -102,6 +144,11 @@ object ProposalScoringUtil {
             riskScore += 0.1
         }
         
+        // Long implementation timeline increases risk
+        if (proposal.implementation_timeline_days != null && proposal.implementation_timeline_days > 180) {
+            riskScore += 0.2
+        }
+        
         // Cap risk score at 1.0
         return minOf(1.0, riskScore)
     }
@@ -111,5 +158,21 @@ object ProposalScoringUtil {
      */
     fun rankProposals(proposals: List<Proposal>): List<Proposal> {
         return proposals.sortedByDescending { calculateProposalScore(it) }
+    }
+    
+    /**
+     * Get strategic summary for a proposal
+     */
+    fun getStrategicSummary(proposal: Proposal): String {
+        val roi = calculateROI(proposal)
+        val score = calculateProposalScore(proposal)
+        val collaborations = proposal.inter_council_collaborations?.size ?: 0
+        
+        return when {
+            score > 0.8 -> "High Priority Strategic Initiative"
+            score > 0.6 -> "Important Strategic Proposal"
+            score > 0.4 -> "Standard Proposal"
+            else -> "Low Priority Initiative"
+        }
     }
 }

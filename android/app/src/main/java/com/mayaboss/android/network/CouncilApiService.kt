@@ -2,13 +2,15 @@ package com.mayaboss.android.network
 
 import com.mayaboss.android.model.Council
 import com.mayaboss.android.model.CouncilOpportunity
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 data class CouncilDataReport(
     val council_id: String,
@@ -50,7 +52,18 @@ interface CouncilApiService {
 
     companion object {
         fun create(baseUrl: String): CouncilApiService {
-            return MAYAApiService.create(baseUrl) as CouncilApiService
+            // Create a proper CouncilApiService instance instead of casting
+            val okHttpClient = OkHttpClient.Builder()
+                .addInterceptor(AuthInterceptor())
+                .build()
+
+            val retrofit = Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                
+            return retrofit.create(CouncilApiService::class.java)
         }
     }
 }

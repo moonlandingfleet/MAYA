@@ -22,7 +22,7 @@ class AuthInterceptor : Interceptor {
         authToken?.let { token ->
             if (token.isNotEmpty()) {
                 builder.addHeader("Authorization", "Bearer $token")
-                Timber.d("Added auth token to request: ${originalRequest.url().toString()}")
+                Timber.d("Added auth token to request: ${originalRequest.url.toString()}")
             }
         }
 

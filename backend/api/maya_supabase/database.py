@@ -16,7 +16,12 @@ class SupabaseService:
         self.url = os.getenv("SUPABASE_URL", "")
         self.key = os.getenv("SUPABASE_KEY", "")
         if self.url and self.key:
-            self.client: Client = create_client(self.url, self.key)
+            try:
+                self.client: Client = create_client(self.url, self.key)
+            except Exception as e:
+                print(f"Warning: Failed to initialize Supabase client: {e}")
+                print("Supabase database operations will be disabled.")
+                self.client = None
         else:
             self.client = None
             print("Warning: Supabase credentials not found. Database operations will be disabled.")

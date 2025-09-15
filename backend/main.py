@@ -1,4 +1,10 @@
 
+import sys
+import os
+
+# Add the api directory to the Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
+
 import subprocess
 import json
 import time
@@ -17,10 +23,22 @@ import os # Already here, good.
 load_dotenv()
 
 # --- Custom Supabase Service and Models ---
-from maya_supabase.database import SupabaseService
-from maya_supabase.models import Proposal as SupabaseProposal # Alias for clarity
-from maya_supabase.models import Council as SupabaseCouncil # If we need it soon
-from maya_supabase.models import TreasuryTransaction as SupabaseTreasuryTransaction # For later
+# Initialize variables to None
+db_service = None
+SupabaseProposal = None
+SupabaseCouncil = None
+SupabaseTreasuryTransaction = None
+
+try:
+    from maya_supabase.database import SupabaseService
+    from maya_supabase.models import Proposal as SupabaseProposal # Alias for clarity
+    from maya_supabase.models import Council as SupabaseCouncil # If we need it soon
+    from maya_supabase.models import TreasuryTransaction as SupabaseTreasuryTransaction # For later
+    # Instantiate our custom Supabase service only if import succeeded
+    db_service = SupabaseService()
+except ImportError as e:
+    print(f"Warning: Failed to import maya_supabase modules: {e}")
+    print("Supabase functionality will be disabled.")
 
 # --- Authentication --- NEWLY ADDED ---
 from auth import verify_token_and_get_payload # verify_token_and_get_payload returns the whole payload
@@ -43,8 +61,8 @@ class Treasurer: # Unchanged for now
         infura_url_to_use = os.getenv("INFURA_URL_ACTUAL", INFURA_URL) 
         try:
             self.w3 = Web3(Web3.HTTPProvider(infura_url_to_use))
-            # TODO: Verify this call based on your web3.py version (v5 vs v6 for isConnected)
-            if not self.w3.isConnected(): 
+            # Check connection using the correct method for web3.py v6
+            if not self.w3.is_connected(): 
                 print("Warning: Failed to connect to Infura. Treasury balance will be simulated.")
                 self.w3 = None
             else:
@@ -54,12 +72,12 @@ class Treasurer: # Unchanged for now
             self.w3 = None
 
     def get_treasury_info(self) -> Treasury:
-        # TODO: Verify this call based on your web3.py version (v5 vs v6 for isConnected)
-        if self.w3 and self.w3.isConnected(): 
+        # Check connection using the correct method for web3.py v6
+        if self.w3 and self.w3.is_connected(): 
             try:
-                checksum_address = self.w3.toChecksumAddress(self._treasury.address)
-                balance_wei = self.w3.eth.getBalance(checksum_address)
-                balance_eth = self.w3.fromWei(balance_wei, 'ether')
+                checksum_address = self.w3.to_checksum_address(self._treasury.address)
+                balance_wei = self.w3.eth.get_balance(checksum_address)
+                balance_eth = self.w3.from_wei(balance_wei, 'ether')
                 self._treasury.balance_eth = float(balance_eth)
                 print(f"Successfully fetched live balance from Infura: {self._treasury.balance_eth} ETH")
             except Exception as e:
@@ -72,10 +90,34 @@ class Treasurer: # Unchanged for now
 # --- FastAPI App - The Chancellor's Office ---
 app = FastAPI(title="MAYA Core - The Chancellor's Office")
 
-db_service = SupabaseService() # Instantiate our custom Supabase service
+# Include the Supabase API router
+try:
+    from maya_supabase.api import router as supabase_router
+    app.include_router(supabase_router)
+    print("Successfully included Supabase API router")
+except ImportError as e:
+    print(f"Warning: Failed to import Supabase API router: {e}")
+
+# Add the new strategic review router
+try:
+    from maya_supabase.strategic_review import router as strategic_router
+    app.include_router(strategic_router)
+    print("Successfully included strategic review router")
+except ImportError as e:
+    print(f"Warning: Failed to import strategic review router: {e}")
+
+# Add the kingdom dashboard router
+try:
+    from maya_supabase.kingdom_dashboard import router as kingdom_router
+    app.include_router(kingdom_router)
+    print("Successfully included kingdom dashboard router")
+except ImportError as e:
+    print(f"Warning: Failed to import kingdom dashboard router: {e}")
+
 treasurer = Treasurer() # Keep current treasurer
 
-if not db_service.client:
+# Check if db_service was successfully initialized
+if db_service is None or (hasattr(db_service, 'client') and not db_service.client):
     print("FATAL: Supabase client in db_service not initialized. Check .env file and Supabase credentials.")
 
 app.add_middleware( 
@@ -94,7 +136,7 @@ class AgentFundingRequest(BaseModel):
 class FundingConfirmationRequest(BaseModel):
     transaction_hash: str
 
-@app.post("/council/{council_id}/request_funding", response_model=SupabaseProposal)
+@app.post("/council/{council_id}/request_funding", response_model=Dict[str, Any])
 async def council_request_funding_route(
     council_id: str, 
     request: AgentFundingRequest,
@@ -104,7 +146,8 @@ async def council_request_funding_route(
     print(f"Funding request received from authenticated agent Supabase ID: {requesting_agent_supa_id} for council: {council_id}")
     # TODO: Add logic to map requesting_agent_supa_id to council_id or verify permissions
 
-    if not db_service.client:
+    # Check if db_service is available
+    if db_service is None or not hasattr(db_service, 'client') or not db_service.client:
         raise HTTPException(status_code=503, detail="Supabase service not available.")
 
     roi_score = 0.0
@@ -116,6 +159,10 @@ async def council_request_funding_route(
     else: 
         roi_score = 99999.0 
 
+    # Only create proposal data if SupabaseProposal is available
+    if SupabaseProposal is None:
+        raise HTTPException(status_code=503, detail="Supabase models not available.")
+        
     new_proposal_data = SupabaseProposal(
         council_id=council_id,
         purpose=request.purpose,
@@ -135,10 +182,11 @@ async def council_request_funding_route(
     print(f"New proposal {created_proposal.id} submitted by council {council_id} (Agent Supabase ID: {requesting_agent_supa_id}) for PENDING_REVIEW.")
     return created_proposal
 
-@app.get("/proposals/sovereign_review", response_model=List[SupabaseProposal])
+@app.get("/proposals/sovereign_review", response_model=List[Dict[str, Any]])
 async def get_proposals_for_sovereign_review_route(payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
     print(f"Sovereign review requested by user Supabase ID: {payload.get('sub')}")
-    if not db_service.client:
+    # Check if db_service is available
+    if db_service is None or not hasattr(db_service, 'client') or not db_service.client:
         raise HTTPException(status_code=503, detail="Supabase service not available.")
     
     try:
@@ -153,11 +201,11 @@ async def get_proposals_for_sovereign_review_route(payload: Dict[str, Any] = Dep
         print(f"Error fetching proposals for sovereign review: {e}")
         raise HTTPException(status_code=500, detail="Error fetching proposals.")
 
-@app.post("/proposals/{proposal_id}/sovereign_approve", response_model=SupabaseProposal)
+@app.post("/proposals/{proposal_id}/sovereign_approve", response_model=Dict[str, Any])
 async def sovereign_approve_proposal_route(proposal_id: str, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
     print(f"Sovereign approval for {proposal_id} by user Supabase ID: {payload.get('sub')}")
-    # TODO: Add logic to ensure only Sovereign can call this (e.g., check sub against known Sovereign Supabase ID or a role in payload)
-    if not db_service.client:
+    # Check if db_service is available
+    if db_service is None or not hasattr(db_service, 'client') or not db_service.client:
         raise HTTPException(status_code=503, detail="Supabase service not available.")
 
     updated_proposal = db_service.update_proposal(
@@ -174,11 +222,11 @@ async def sovereign_approve_proposal_route(proposal_id: str, payload: Dict[str, 
     print(f"Proposal {proposal_id} status changed to APPROVED_PENDING_FUNDING by user {payload.get('sub')}.")
     return updated_proposal
 
-@app.post("/proposals/{proposal_id}/sovereign_reject", response_model=SupabaseProposal)
+@app.post("/proposals/{proposal_id}/sovereign_reject", response_model=Dict[str, Any])
 async def sovereign_reject_proposal_route(proposal_id: str, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
     print(f"Sovereign rejection for {proposal_id} by user Supabase ID: {payload.get('sub')}")
-    # TODO: Add logic to ensure only Sovereign can call this
-    if not db_service.client:
+    # Check if db_service is available
+    if db_service is None or not hasattr(db_service, 'client') or not db_service.client:
         raise HTTPException(status_code=503, detail="Supabase service not available.")
 
     updated_proposal = db_service.update_proposal(
@@ -191,11 +239,11 @@ async def sovereign_reject_proposal_route(proposal_id: str, payload: Dict[str, A
     print(f"Proposal {proposal_id} status changed to REJECTED by user {payload.get('sub')}.")
     return updated_proposal
 
-@app.post("/proposals/{proposal_id}/funding_confirmed", response_model=SupabaseProposal)
+@app.post("/proposals/{proposal_id}/funding_confirmed", response_model=Dict[str, Any])
 async def funding_confirmed_route(proposal_id: str, request: FundingConfirmationRequest, payload: Dict[str, Any] = Depends(verify_token_and_get_payload)):
     print(f"Funding confirmation for {proposal_id} by user Supabase ID: {payload.get('sub')}")
-    # TODO: Add logic to ensure only Sovereign or authorized entity can call this
-    if not db_service.client:
+    # Check if db_service is available
+    if db_service is None or not hasattr(db_service, 'client') or not db_service.client:
         raise HTTPException(status_code=503, detail="Supabase service not available.")
 
     updated_proposal = db_service.update_proposal(
@@ -294,5 +342,7 @@ def get_wallet_session_route(session_id: str):
 # --- Server Startup ---
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    import sys
+    # Use string reference to avoid type checking issues
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False) 
 

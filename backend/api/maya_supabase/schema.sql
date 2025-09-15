@@ -22,7 +22,15 @@ CREATE TABLE IF NOT EXISTS proposals (
     last_status_update_at TIMESTAMPTZ DEFAULT NOW(),
     sovereign_approved_at TIMESTAMPTZ,
     funding_transaction_hash TEXT,
-    roi_score NUMERIC
+    roi_score NUMERIC,
+    
+    -- Enhanced fields for digital kingdom
+    strategic_impact TEXT,
+    resource_dependencies JSONB,
+    inter_council_collaborations JSONB,
+    implementation_timeline_days INTEGER,
+    risk_assessment TEXT,
+    success_metrics JSONB
 );
 
 -- Create treasury_transactions table
@@ -47,7 +55,12 @@ CREATE TABLE IF NOT EXISTS council_opportunities (
     reported_at TIMESTAMPTZ DEFAULT NOW(),
     potential_cost_eth NUMERIC,
     potential_revenue_btc NUMERIC,
-    status TEXT NOT NULL CHECK (status IN ('NEW', 'UNDER_REVIEW_BY_MAYA', 'CONVERTED_TO_PROPOSAL', 'DISMISSED'))
+    status TEXT NOT NULL CHECK (status IN ('NEW', 'UNDER_REVIEW_BY_MAYA', 'CONVERTED_TO_PROPOSAL', 'DISMISSED')),
+    
+    -- Enhanced fields for inter-council collaboration
+    resource_exchange_proposal TEXT,
+    collaborating_councils JSONB,
+    strategic_value NUMERIC
 );
 
 -- Create indexes for better query performance
